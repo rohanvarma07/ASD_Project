@@ -2,6 +2,8 @@
 
 A professional web-based system for autism detection using machine learning. This project provides an intuitive interface for uploading autism screening datasets and automatically generating predictions.
 
+🌐 **Live Demo**: [Deploy on Render](https://render.com) | [See Deployment Guide](DEPLOYMENT_GUIDE.md)
+
 ## 📋 Features
 
 - **User Authentication**: Secure registration and login system
@@ -95,6 +97,32 @@ python app.py
 The application will start on `http://localhost:5001`
 
 **Note:** Port changed from 5000 to 5001 because macOS uses port 5000 for AirPlay Receiver.
+
+## 🚀 Production Deployment
+
+Ready to deploy your app to the world? See our comprehensive deployment guides:
+
+### Quick Deploy (5 minutes)
+- **[Render](https://render.com)** - Recommended for beginners
+  - ✅ Free tier available
+  - ✅ Automatic deployments from GitHub
+  - ✅ HTTPS included
+  - 📖 [Quick Deploy Guide](QUICK_DEPLOY_RENDER.txt)
+
+### Other Options
+- **PythonAnywhere** - Python-focused hosting
+- **Heroku** - Popular platform (paid)
+- **Railway** - Modern deployment platform
+
+📖 **Full Deployment Guide**: [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)
+
+### Pre-Deployment Checklist
+- [x] Procfile created
+- [x] runtime.txt configured
+- [x] requirements.txt includes gunicorn
+- [x] Environment variables configured
+- [x] Production-ready app.py
+
 
 ## 💻 Usage Guide
 
