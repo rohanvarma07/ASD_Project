@@ -598,7 +598,8 @@ def internal_error(e):
 
 if __name__ == '__main__':
     # Create sample user for testing (if not exists)
-    success, message = db.register_user('admin@example.com', '1234567890', 'admin123')
+    # Using a password that meets validation requirements
+    success, message = db.register_user('admin@example.com', '9876543210', 'Admin@123', 'Admin')
     if success:
         print("✅ Sample admin user created")
     
@@ -607,7 +608,7 @@ if __name__ == '__main__':
     print("=" * 50)
     print("Sample login credentials:")
     print("Email: admin@example.com")
-    print("Password: admin123")
+    print("Password: Admin@123")
     print("=" * 50)
     print("\nServer will start at: http://localhost:5001")
     print("=" * 50)
