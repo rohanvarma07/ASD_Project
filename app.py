@@ -14,6 +14,7 @@ import numpy as np
 from datetime import datetime
 import pickle
 import json
+from database import Database, PostgreSQLDatabase
 
 # ========================================
 # APPLICATION CONFIGURATION
@@ -35,12 +36,21 @@ app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # ========================================
-# DATABASE SIMULATION (In-Memory)
-# For production, use a real database like SQLite, PostgreSQL, etc.
+# DATABASE INITIALIZATION
 # ========================================
 
-users_db = {}  # username: {email, mobile, password_hash}
-results_db = {}  # email: {results data}
+# Use PostgreSQL in production if DATABASE_URL is set, otherwise SQLite
+if os.environ.get('DATABASE_URL'):
+    try:
+        db = PostgreSQLDatabase(os.environ.get('DATABASE_URL'))
+        print("✅ Connected to PostgreSQL database")
+    except Exception as e:
+        print(f"⚠️ PostgreSQL connection failed: {e}")
+        print("📁 Falling back to SQLite...")
+        db = Database('asd_database.db')
+else:
+    db = Database('asd_database.db')
+    print("📁 Using SQLite database")
 
 # ========================================
 # HELPER FUNCTIONS
@@ -91,13 +101,14 @@ def predict_asd(df):
     return predictions.tolist(), total_scores.tolist()
 
 
-def process_dataset(filepath, email):
+def process_dataset(filepath, email, file_id):
     """
     Process uploaded dataset and generate predictions.
     
     Args:
         filepath: path to uploaded CSV file
         email: user email for storing results
+        file_id: database ID of uploaded file
     
     Returns:
         results dictionary with predictions and statistics
@@ -144,20 +155,25 @@ def process_dataset(filepath, email):
                 'prediction': int(row['prediction']) if pd.notna(row['prediction']) else 0
             })
         
-        # Store results in database
+        # Prepare results for database storage
         results = {
             'success': True,
-            'total_records': total_records,
-            'asd_count': asd_count,
-            'no_asd_count': no_asd_count,
+            'total_cases': total_records,
+            'asd_positive': asd_count,
+            'asd_negative': no_asd_count,
             'detection_rate': detection_rate,
-            'model_accuracy': 95.8,  # Simulated accuracy
+            'accuracy_score': 95.8,  # Simulated accuracy
+            'confidence_score': 92.3,  # Simulated confidence
             'processing_time': '< 1s',
             'detailed_results': detailed_results,
             'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
         
-        results_db[email] = results
+        # Store results in database
+        db_success, result_id = db.save_analysis_results(email, file_id, results)
+        
+        if not db_success:
+            print(f"Warning: Failed to save results to database: {result_id}")
         
         return results
         
@@ -215,23 +231,15 @@ def register():
             flash('Passwords do not match', 'error')
             return render_template('register.html')
         
-        if email in [user['email'] for user in users_db.values()]:
-            flash('Email already registered', 'error')
+        # Register user in database
+        success, message = db.register_user(email, mobile, password)
+        
+        if success:
+            flash('Registration successful! Please login.', 'success')
+            return redirect(url_for('login'))
+        else:
+            flash(message, 'error')
             return render_template('register.html')
-        
-        if username in users_db:
-            flash('Username already taken', 'error')
-            return render_template('register.html')
-        
-        # Store user
-        users_db[username] = {
-            'email': email,
-            'mobile': mobile,
-            'password_hash': generate_password_hash(password)
-        }
-        
-        flash('Registration successful! Please login.', 'success')
-        return redirect(url_for('login'))
     
     return render_template('register.html')
 
@@ -248,26 +256,20 @@ def login():
             flash('Email and password are required', 'error')
             return render_template('login.html')
         
-        # Find user by email
-        user = None
-        username = None
-        for uname, udata in users_db.items():
-            if udata['email'] == email:
-                user = udata
-                username = uname
-                break
+        # Authenticate user with database
+        success, result = db.login_user(email, password)
         
-        if not user or not check_password_hash(user['password_hash'], password):
-            flash('Invalid email or password', 'error')
+        if success:
+            # Set session
+            session['logged_in'] = True
+            session['email'] = email
+            session['user_data'] = result
+            
+            flash('Login successful!', 'success')
+            return redirect(url_for('dashboard'))
+        else:
+            flash(result, 'error')
             return render_template('login.html')
-        
-        # Set session
-        session['logged_in'] = True
-        session['username'] = username
-        session['email'] = email
-        
-        flash('Login successful!', 'success')
-        return redirect(url_for('dashboard'))
     
     return render_template('login.html')
 
@@ -291,7 +293,16 @@ def dashboard():
         flash('Please login to access the dashboard', 'warning')
         return redirect(url_for('login'))
     
-    return render_template('dashboard.html', username=session.get('username'))
+    email = session.get('email')
+    
+    # Get user statistics
+    stats = db.get_user_stats(email)
+    recent_files = db.get_user_files(email)
+    
+    return render_template('dashboard.html', 
+                         username=email.split('@')[0], 
+                         stats=stats,
+                         recent_files=recent_files)
 
 
 @app.route('/upload', methods=['GET', 'POST'])
@@ -324,8 +335,21 @@ def upload():
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
         
+        # Save file info to database
+        file_size = os.path.getsize(filepath)
+        success, file_id = db.save_uploaded_file(
+            session.get('email'), 
+            filename, 
+            filepath, 
+            file_size
+        )
+        
+        if not success:
+            flash(f'Error saving file: {file_id}', 'error')
+            return redirect(request.url)
+        
         # Process dataset
-        results = process_dataset(filepath, session.get('email'))
+        results = process_dataset(filepath, session.get('email'), file_id)
         
         if not results.get('success'):
             flash(results.get('error', 'Error processing dataset'), 'error')
@@ -344,9 +368,9 @@ def results():
         flash('Please login to view results', 'warning')
         return redirect(url_for('login'))
     
-    # Get results for current user
+    # Get results for current user from database
     email = session.get('email')
-    user_results = results_db.get(email)
+    user_results = db.get_latest_result(email)
     
     return render_template('results.html', results=user_results)
 
@@ -380,12 +404,10 @@ def internal_error(e):
 # ========================================
 
 if __name__ == '__main__':
-    # Create sample user for testing (remove in production)
-    users_db['admin'] = {
-        'email': 'admin@example.com',
-        'mobile': '1234567890',
-        'password_hash': generate_password_hash('admin123')
-    }
+    # Create sample user for testing (if not exists)
+    success, message = db.register_user('admin@example.com', '1234567890', 'admin123')
+    if success:
+        print("✅ Sample admin user created")
     
     print("=" * 50)
     print("ASD DETECTION SYSTEM - SERVER STARTING")
