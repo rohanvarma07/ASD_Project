@@ -137,15 +137,21 @@ function validateRegisterForm(e) {
     } else if (username.length < 3) {
         showError('username', 'Username must be at least 3 characters');
         isValid = false;
+    } else if (username.length > 50) {
+        showError('username', 'Username must not exceed 50 characters');
+        isValid = false;
     }
     
-    // Email validation
+    // Email validation - comprehensive
     if (email === '') {
         showError('email', 'Email is required');
         isValid = false;
-    } else if (!isValidEmail(email)) {
-        showError('email', 'Please enter a valid email address');
-        isValid = false;
+    } else {
+        const emailValidation = validateEmailFormat(email);
+        if (!emailValidation.valid) {
+            showError('email', emailValidation.message);
+            isValid = false;
+        }
     }
     
     // Mobile validation
@@ -153,17 +159,20 @@ function validateRegisterForm(e) {
         showError('mobile', 'Mobile number is required');
         isValid = false;
     } else if (!isValidMobile(mobile)) {
-        showError('mobile', 'Please enter a valid 10-digit mobile number');
+        showError('mobile', 'Please enter a valid 10-digit mobile number (must start with 6-9)');
         isValid = false;
     }
     
-    // Password validation
+    // Password validation - comprehensive
     if (password === '') {
         showError('password', 'Password is required');
         isValid = false;
-    } else if (password.length < 6) {
-        showError('password', 'Password must be at least 6 characters');
-        isValid = false;
+    } else {
+        const passwordValidation = validatePasswordStrength(password);
+        if (!passwordValidation.valid) {
+            showError('password', passwordValidation.message);
+            isValid = false;
+        }
     }
     
     // Confirm password validation
@@ -194,16 +203,24 @@ function validateLoginForm(e) {
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
     
+    // Email validation
     if (email === '') {
         showError('email', 'Email is required');
         isValid = false;
-    } else if (!isValidEmail(email)) {
-        showError('email', 'Please enter a valid email address');
-        isValid = false;
+    } else {
+        const emailValidation = validateEmailFormat(email);
+        if (!emailValidation.valid) {
+            showError('email', emailValidation.message);
+            isValid = false;
+        }
     }
     
+    // Password validation
     if (password === '') {
         showError('password', 'Password is required');
+        isValid = false;
+    } else if (password.length < 6) {
+        showError('password', 'Password must be at least 6 characters');
         isValid = false;
     }
     
@@ -253,13 +270,179 @@ function validateUploadForm(e) {
 // ========================================
 // VALIDATION HELPERS
 // ========================================
+
+/**
+ * Comprehensive email validation
+ * Supports: .com, .in, .org, .edu, .net, .co.uk, .gov, .io, etc.
+ */
+function validateEmailFormat(email) {
+    // Basic format check
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    
+    if (!emailRegex.test(email)) {
+        return {
+            valid: false,
+            message: 'Please enter a valid email address'
+        };
+    }
+    
+    // Check for multiple @ symbols
+    if ((email.match(/@/g) || []).length !== 1) {
+        return {
+            valid: false,
+            message: 'Email must contain exactly one @ symbol'
+        };
+    }
+    
+    // Split email into local and domain parts
+    const [localPart, domain] = email.split('@');
+    
+    // Local part validation
+    if (localPart.length === 0 || localPart.length > 64) {
+        return {
+            valid: false,
+            message: 'Email username part is invalid'
+        };
+    }
+    
+    // Domain validation
+    if (domain.length < 3 || domain.length > 255) {
+        return {
+            valid: false,
+            message: 'Email domain is invalid'
+        };
+    }
+    
+    // Check for consecutive dots
+    if (email.includes('..')) {
+        return {
+            valid: false,
+            message: 'Email cannot contain consecutive dots'
+        };
+    }
+    
+    // Check for valid TLDs - checking from longest to shortest
+    // Two-part TLDs (must be checked first)
+    const twoPartTLDs = ['.co.in', '.co.uk', '.ac.in', '.edu.in', '.gov.in', '.co.za', '.com.au'];
+    
+    // Single TLDs
+    const singleTLDs = [
+        '.com', '.in', '.org', '.edu', '.net', '.gov', '.mil',
+        '.io', '.ai', '.me', '.us', '.uk', '.ca', '.au',
+        '.de', '.fr', '.jp', '.cn', '.br', '.ru', '.za', '.it', '.es'
+    ];
+    
+    const domainLower = domain.toLowerCase();
+    
+    // First check two-part TLDs
+    for (const tld of twoPartTLDs) {
+        if (domainLower.endsWith(tld)) {
+            return {
+                valid: true,
+                message: 'Valid email'
+            };
+        }
+    }
+    
+    // Then check single TLDs
+    for (const tld of singleTLDs) {
+        if (domainLower.endsWith(tld)) {
+            return {
+                valid: true,
+                message: 'Valid email'
+            };
+        }
+    }
+    
+    return {
+        valid: false,
+        message: 'Please use a valid email domain (e.g., .com, .in, .org, .edu, .net)'
+    };
+}
+
+/**
+ * Comprehensive password validation
+ * Requirements:
+ * - Minimum 8 characters
+ * - At least 1 uppercase letter
+ * - At least 1 lowercase letter
+ * - At least 1 digit
+ * - At least 1 special character
+ */
+function validatePasswordStrength(password) {
+    // Check minimum length
+    if (password.length < 8) {
+        return {
+            valid: false,
+            message: 'Password must be at least 8 characters long'
+        };
+    }
+    
+    // Check maximum length
+    if (password.length > 128) {
+        return {
+            valid: false,
+            message: 'Password must not exceed 128 characters'
+        };
+    }
+    
+    // Check for uppercase letter
+    if (!/[A-Z]/.test(password)) {
+        return {
+            valid: false,
+            message: 'Password must contain at least one uppercase letter (A-Z)'
+        };
+    }
+    
+    // Check for lowercase letter
+    if (!/[a-z]/.test(password)) {
+        return {
+            valid: false,
+            message: 'Password must contain at least one lowercase letter (a-z)'
+        };
+    }
+    
+    // Check for digit
+    if (!/[0-9]/.test(password)) {
+        return {
+            valid: false,
+            message: 'Password must contain at least one number (0-9)'
+        };
+    }
+    
+    // Check for special character
+    if (!/[!@#$%^&*()_+\-=\[\]{};:'",.<>?/\\|`~]/.test(password)) {
+        return {
+            valid: false,
+            message: 'Password must contain at least one special character (!@#$%^&* etc.)'
+        };
+    }
+    
+    // Check for spaces
+    if (password.includes(' ')) {
+        return {
+            valid: false,
+            message: 'Password must not contain spaces'
+        };
+    }
+    
+    return {
+        valid: true,
+        message: 'Strong password'
+    };
+}
+
+// Legacy function for backward compatibility
 function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    return validateEmailFormat(email).valid;
 }
 
 function isValidMobile(mobile) {
-    const mobileRegex = /^[0-9]{10}$/;
+    // Remove spaces and dashes
+    mobile = mobile.replace(/[\s-]/g, '');
+    
+    // Check if it's exactly 10 digits and starts with 6-9
+    const mobileRegex = /^[6-9][0-9]{9}$/;
     return mobileRegex.test(mobile);
 }
 

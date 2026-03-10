@@ -33,6 +33,7 @@ class Database:
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT NOT NULL,
                 email TEXT UNIQUE NOT NULL,
                 mobile TEXT NOT NULL,
                 password_hash TEXT NOT NULL,
@@ -40,6 +41,13 @@ class Database:
                 last_login TIMESTAMP
             )
         ''')
+        
+        # Check if username column exists (for existing databases)
+        cursor.execute("PRAGMA table_info(users)")
+        columns = [column[1] for column in cursor.fetchall()]
+        if 'username' not in columns:
+            cursor.execute('ALTER TABLE users ADD COLUMN username TEXT DEFAULT "User"')
+            print("✅ Added username column to existing users table")
         
         # Create uploaded_files table
         cursor.execute('''
@@ -81,7 +89,7 @@ class Database:
     # USER MANAGEMENT
     # ========================================
     
-    def register_user(self, email, mobile, password):
+    def register_user(self, email, mobile, password, username=None):
         """Register a new user"""
         try:
             conn = self.get_connection()
@@ -93,12 +101,16 @@ class Database:
                 conn.close()
                 return False, "Email already registered"
             
+            # Use email prefix as username if not provided
+            if not username:
+                username = email.split('@')[0]
+            
             # Hash password and insert user
             password_hash = generate_password_hash(password)
             cursor.execute('''
-                INSERT INTO users (email, mobile, password_hash)
-                VALUES (?, ?, ?)
-            ''', (email, mobile, password_hash))
+                INSERT INTO users (username, email, mobile, password_hash)
+                VALUES (?, ?, ?, ?)
+            ''', (username, email, mobile, password_hash))
             
             conn.commit()
             conn.close()
@@ -133,7 +145,11 @@ class Database:
             conn.commit()
             conn.close()
             
+            # Get username, default to email prefix if not set
+            username = user['username'] if user['username'] else email.split('@')[0]
+            
             return True, {
+                'username': username,
                 'email': user['email'],
                 'mobile': user['mobile'],
                 'created_at': user['created_at']
@@ -374,6 +390,7 @@ class PostgreSQLDatabase:
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
+                username VARCHAR(100) NOT NULL,
                 email VARCHAR(255) UNIQUE NOT NULL,
                 mobile VARCHAR(20) NOT NULL,
                 password_hash VARCHAR(255) NOT NULL,
@@ -381,6 +398,16 @@ class PostgreSQLDatabase:
                 last_login TIMESTAMP
             )
         ''')
+        
+        # Add username column if it doesn't exist (for existing databases)
+        cursor.execute("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name='users' AND column_name='username'
+        """)
+        if not cursor.fetchone():
+            cursor.execute('ALTER TABLE users ADD COLUMN username VARCHAR(100) DEFAULT %s', ('User',))
+            print("✅ Added username column to PostgreSQL users table")
         
         # Create uploaded_files table
         cursor.execute('''
@@ -422,7 +449,7 @@ class PostgreSQLDatabase:
     # USER MANAGEMENT (PostgreSQL uses %s instead of ?)
     # ========================================
     
-    def register_user(self, email, mobile, password):
+    def register_user(self, email, mobile, password, username=None):
         """Register a new user"""
         try:
             conn = self.get_connection()
@@ -434,12 +461,16 @@ class PostgreSQLDatabase:
                 conn.close()
                 return False, "Email already registered"
             
+            # Use email prefix as username if not provided
+            if not username:
+                username = email.split('@')[0]
+            
             # Hash password and insert user
             password_hash = generate_password_hash(password)
             cursor.execute('''
-                INSERT INTO users (email, mobile, password_hash)
-                VALUES (%s, %s, %s)
-            ''', (email, mobile, password_hash))
+                INSERT INTO users (username, email, mobile, password_hash)
+                VALUES (%s, %s, %s, %s)
+            ''', (username, email, mobile, password_hash))
             
             conn.commit()
             conn.close()
@@ -474,7 +505,11 @@ class PostgreSQLDatabase:
             conn.commit()
             conn.close()
             
+            # Get username, default to email prefix if not set
+            username = user.get('username') if user.get('username') else email.split('@')[0]
+            
             return True, {
+                'username': username,
                 'email': user['email'],
                 'mobile': user['mobile'],
                 'created_at': user['created_at']

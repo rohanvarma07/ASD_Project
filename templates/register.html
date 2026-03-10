@@ -67,6 +67,9 @@
                         placeholder="your.email@example.com"
                         required
                     >
+                    <small style="color: #666; font-size: 0.85rem;">
+                        Supported domains: .com, .in, .org, .edu, .net, .co.uk, etc.
+                    </small>
                 </div>
 
                 <!-- Mobile Number -->
@@ -77,10 +80,14 @@
                         id="mobile" 
                         name="mobile" 
                         class="form-control" 
-                        placeholder="10-digit mobile number"
-                        pattern="[0-9]{10}"
+                        placeholder="10-digit mobile number (e.g., 9876543210)"
+                        pattern="[6-9][0-9]{9}"
+                        maxlength="10"
                         required
                     >
+                    <small style="color: #666; font-size: 0.85rem;">
+                        Must be 10 digits starting with 6, 7, 8, or 9
+                    </small>
                 </div>
 
                 <!-- Password -->
@@ -91,9 +98,12 @@
                         id="password" 
                         name="password" 
                         class="form-control" 
-                        placeholder="At least 6 characters"
+                        placeholder="Create a strong password"
                         required
                     >
+                    <small style="color: #666; font-size: 0.85rem;">
+                        Min 8 characters with uppercase, lowercase, number & special character (!@#$%^&*)
+                    </small>
                 </div>
 
                 <!-- Confirm Password -->

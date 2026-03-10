@@ -56,6 +56,132 @@ else:
 # HELPER FUNCTIONS
 # ========================================
 
+def validate_email(email):
+    """
+    Validate email format with comprehensive checks
+    Supports: .com, .in, .org, .edu, .net, .co.uk, .gov, .io, etc.
+    """
+    import re
+    
+    # Comprehensive email regex pattern
+    # Supports international domains and various TLDs
+    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    
+    if not re.match(email_pattern, email):
+        return False
+    
+    # Additional checks
+    if email.count('@') != 1:
+        return False
+    
+    local_part, domain = email.split('@')
+    
+    # Local part validation
+    if len(local_part) == 0 or len(local_part) > 64:
+        return False
+    
+    # Domain validation
+    if len(domain) < 3 or len(domain) > 255:
+        return False
+    
+    # Check for consecutive dots
+    if '..' in email:
+        return False
+    
+    # Check if domain has at least one dot
+    if '.' not in domain:
+        return False
+    
+    # Valid common TLDs - checking from longest to shortest to avoid false matches
+    # Two-part TLDs (must be checked first)
+    two_part_tlds = ['.co.in', '.co.uk', '.ac.in', '.edu.in', '.gov.in', '.co.za', '.com.au']
+    
+    # Single TLDs
+    single_tlds = [
+        '.com', '.in', '.org', '.edu', '.net', '.gov', '.mil',
+        '.io', '.ai', '.me', '.us', '.uk', '.ca', '.au',
+        '.de', '.fr', '.jp', '.cn', '.br', '.ru', '.za', '.it', '.es'
+    ]
+    
+    # Check if email ends with a valid TLD
+    domain_lower = domain.lower()
+    
+    # First check two-part TLDs
+    for tld in two_part_tlds:
+        if domain_lower.endswith(tld):
+            return True
+    
+    # Then check single TLDs (but make sure it's not just .co, .ac, etc.)
+    for tld in single_tlds:
+        if domain_lower.endswith(tld):
+            # Make sure it's the actual TLD, not a partial match
+            # e.g., reject "example.co" but accept "example.com"
+            before_tld = domain_lower[:-len(tld)]
+            if before_tld and before_tld[-1] == '.':
+                continue  # This would be something like "example..com"
+            return True
+    
+    return False
+
+
+def validate_mobile(mobile):
+    """
+    Validate mobile number (10 digits)
+    """
+    import re
+    
+    # Remove any spaces or dashes
+    mobile = mobile.replace(' ', '').replace('-', '')
+    
+    # Check if it's exactly 10 digits
+    mobile_pattern = r'^[6-9][0-9]{9}$'
+    
+    return re.match(mobile_pattern, mobile) is not None
+
+
+def validate_password(password):
+    """
+    Validate password with comprehensive security checks
+    Requirements:
+    - Minimum 8 characters
+    - At least 1 uppercase letter
+    - At least 1 lowercase letter
+    - At least 1 digit
+    - At least 1 special character
+    """
+    import re
+    
+    # Check minimum length
+    if len(password) < 8:
+        return False, 'Password must be at least 8 characters long'
+    
+    # Check maximum length
+    if len(password) > 128:
+        return False, 'Password must not exceed 128 characters'
+    
+    # Check for uppercase letter
+    if not re.search(r'[A-Z]', password):
+        return False, 'Password must contain at least one uppercase letter'
+    
+    # Check for lowercase letter
+    if not re.search(r'[a-z]', password):
+        return False, 'Password must contain at least one lowercase letter'
+    
+    # Check for digit
+    if not re.search(r'[0-9]', password):
+        return False, 'Password must contain at least one number'
+    
+    # Check for special character
+    if not re.search(r'[!@#$%^&*()_+\-=\[\]{};:\'",.<>?/\\|`~]', password):
+        return False, 'Password must contain at least one special character (!@#$%^&* etc.)'
+    
+    # Check for spaces
+    if ' ' in password:
+        return False, 'Password must not contain spaces'
+    
+    return True, 'Password is valid'
+
+
 def allowed_file(filename):
     """Check if file has allowed extension"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -219,20 +345,37 @@ def register():
             flash('All fields are required', 'error')
             return render_template('register.html')
         
+        # Username validation
         if len(username) < 3:
             flash('Username must be at least 3 characters', 'error')
             return render_template('register.html')
         
-        if len(password) < 6:
-            flash('Password must be at least 6 characters', 'error')
+        if len(username) > 50:
+            flash('Username must not exceed 50 characters', 'error')
+            return render_template('register.html')
+        
+        # Email validation - comprehensive check
+        if not validate_email(email):
+            flash('Please enter a valid email address (e.g., user@example.com, user@domain.in)', 'error')
+            return render_template('register.html')
+        
+        # Mobile validation
+        if not validate_mobile(mobile):
+            flash('Please enter a valid 10-digit mobile number', 'error')
+            return render_template('register.html')
+        
+        # Password validation - comprehensive check
+        password_valid, password_message = validate_password(password)
+        if not password_valid:
+            flash(password_message, 'error')
             return render_template('register.html')
         
         if password != confirm_password:
             flash('Passwords do not match', 'error')
             return render_template('register.html')
         
-        # Register user in database
-        success, message = db.register_user(email, mobile, password)
+        # Register user in database (with username)
+        success, message = db.register_user(email, mobile, password, username)
         
         if success:
             flash('Registration successful! Please login.', 'success')
@@ -254,6 +397,16 @@ def login():
         # Validation
         if not all([email, password]):
             flash('Email and password are required', 'error')
+            return render_template('login.html')
+        
+        # Email format validation
+        if not validate_email(email):
+            flash('Please enter a valid email address', 'error')
+            return render_template('login.html')
+        
+        # Password length check
+        if len(password) < 6:
+            flash('Invalid email or password', 'error')
             return render_template('login.html')
         
         # Authenticate user with database
@@ -294,13 +447,17 @@ def dashboard():
         return redirect(url_for('login'))
     
     email = session.get('email')
+    user_data = session.get('user_data', {})
+    
+    # Get username from session, or fallback to email prefix
+    username = user_data.get('username', email.split('@')[0] if email else 'User')
     
     # Get user statistics
     stats = db.get_user_stats(email)
     recent_files = db.get_user_files(email)
     
     return render_template('dashboard.html', 
-                         username=email.split('@')[0], 
+                         username=username, 
                          stats=stats,
                          recent_files=recent_files)
 
