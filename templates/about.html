@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn about Autism Spectrum Disorder and our detection system">
+    <title>About - ASD Detection System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">
+                ASD<span>Detect</span>
+            </a>
+            <ul class="nav-menu">
+                <li><a href="/" class="nav-link">Home</a></li>
+                <li><a href="/about" class="nav-link active">About</a></li>
+                <li><a href="/register" class="nav-link">Register</a></li>
+                <li><a href="/login" class="nav-link">Login</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- About Content -->
+    <div class="container">
+        <div class="about-content">
+            <h1 class="text-center mb-4">About ASD Detection System</h1>
+
+            <!-- What is ASD Section -->
+            <div class="info-section">
+                <h3>📋 What is Autism Spectrum Disorder?</h3>
+                <p>
+                    Autism Spectrum Disorder (ASD) is a complex neurodevelopmental condition that affects 
+                    communication, behavior, and social interaction. It is called a "spectrum" disorder 
+                    because there is wide variation in the type and severity of symptoms people experience.
+                </p>
+                <p>
+                    Early detection and intervention are crucial for individuals with ASD, as they can 
+                    significantly improve outcomes and quality of life. However, traditional diagnosis 
+                    methods can be time-consuming and require specialized expertise.
+                </p>
+                <p>
+                    Common characteristics of ASD include:
+                </p>
+                <ul class="feature-list">
+                    <li>Challenges with social communication and interaction</li>
+                    <li>Restricted or repetitive behaviors and interests</li>
+                    <li>Sensory sensitivities</li>
+                    <li>Differences in learning and attention patterns</li>
+                </ul>
+            </div>
+
+            <!-- Project Purpose Section -->
+            <div class="info-section">
+                <h3>Purpose of This Project</h3>
+                <p>
+                    The ASD Detection System is designed to support healthcare professionals, researchers, 
+                    and caregivers by providing a fast, accessible, and data-driven approach to autism screening.
+                </p>
+                <p>
+                    Our primary objectives include:
+                </p>
+                <ul class="feature-list">
+                    <li>Facilitate early detection of autism spectrum disorder</li>
+                    <li>Provide accessible screening tools for healthcare providers</li>
+                    <li>Support research in autism diagnosis and intervention</li>
+                    <li>Reduce the time and cost associated with traditional screening methods</li>
+                    <li>Enable data-driven insights through comprehensive analytics</li>
+                </ul>
+                <p>
+                    <strong>Important Note:</strong> This system is designed as a screening tool to assist 
+                    professionals and should not replace comprehensive clinical diagnosis by qualified 
+                    healthcare providers.
+                </p>
+            </div>
+
+            <!-- Machine Learning Section -->
+            <div class="info-section">
+                <h3>🤖 How Machine Learning Helps Detect ASD</h3>
+                <p>
+                    Machine Learning (ML) has revolutionized the field of medical diagnostics by enabling 
+                    systems to identify patterns in complex datasets that might be difficult for humans 
+                    to detect manually.
+                </p>
+                <p>
+                    Our ASD Detection System leverages advanced machine learning algorithms to:
+                </p>
+                <ul class="feature-list">
+                    <li>Analyze behavioral screening questionnaires (A1-A10 scores)</li>
+                    <li>Consider demographic factors such as age, gender, and ethnicity</li>
+                    <li>Identify patterns and correlations in the data</li>
+                    <li>Provide probability-based predictions for ASD likelihood</li>
+                    <li>Process large datasets quickly and consistently</li>
+                </ul>
+                <p>
+                    The system uses supervised learning techniques trained on validated autism screening 
+                    datasets. The model learns from historical data where diagnoses are known, enabling it 
+                    to make predictions on new, unseen data.
+                </p>
+                <p>
+                    <strong>Key Benefits of ML in ASD Detection:</strong>
+                </p>
+                <ul class="feature-list">
+                    <li><strong>Speed:</strong> Process hundreds of records in seconds</li>
+                    <li><strong>Consistency:</strong> Eliminate human bias and fatigue</li>
+                    <li><strong>Scalability:</strong> Handle large-scale screening programs</li>
+                    <li><strong>Accessibility:</strong> Make screening tools available in remote areas</li>
+                    <li><strong>Continuous Improvement:</strong> Models can be refined with new data</li>
+                </ul>
+            </div>
+
+            <!-- How to Use Section -->
+            <div class="info-section">
+                <h3>💡 How to Use This System</h3>
+                <p>
+                    Using the ASD Detection System is simple and straightforward:
+                </p>
+                <ol style="list-style: decimal; padding-left: 2rem; color: var(--text-secondary);">
+                    <li style="margin-bottom: 0.75rem;">
+                        <strong>Register:</strong> Create an account with your details
+                    </li>
+                    <li style="margin-bottom: 0.75rem;">
+                        <strong>Login:</strong> Access your personal dashboard
+                    </li>
+                    <li style="margin-bottom: 0.75rem;">
+                        <strong>Upload Dataset:</strong> Upload your autism screening CSV file containing 
+                        the required fields (A1-A10 scores, age, gender, ethnicity)
+                    </li>
+                    <li style="margin-bottom: 0.75rem;">
+                        <strong>Preview Data:</strong> Review your uploaded dataset to ensure accuracy
+                    </li>
+                    <li style="margin-bottom: 0.75rem;">
+                        <strong>Automatic Analysis:</strong> The system automatically processes your data 
+                        using the trained ML model
+                    </li>
+                    <li style="margin-bottom: 0.75rem;">
+                        <strong>View Results:</strong> Access detailed predictions, statistics, and visualizations
+                    </li>
+                </ol>
+            </div>
+
+            <!-- Dataset Format Section -->
+            <div class="info-section">
+                <h3>📊 Required Dataset Format</h3>
+                <p>
+                    Your CSV file should contain the following columns:
+                </p>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Column Name</th>
+                                <th>Description</th>
+                                <th>Data Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>ID</td>
+                                <td>Unique identifier for each record</td>
+                                <td>Integer</td>
+                            </tr>
+                            <tr>
+                                <td>A1_Score to A10_Score</td>
+                                <td>Screening question responses (0 or 1)</td>
+                                <td>Binary</td>
+                            </tr>
+                            <tr>
+                                <td>age</td>
+                                <td>Age of the individual</td>
+                                <td>Integer</td>
+                            </tr>
+                            <tr>
+                                <td>gender</td>
+                                <td>Gender (m/f)</td>
+                                <td>Character</td>
+                            </tr>
+                            <tr>
+                                <td>ethnicity</td>
+                                <td>Ethnic background</td>
+                                <td>Text</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- CTA -->
+            <div class="text-center mt-4">
+                <a href="/register" class="btn btn-primary" style="font-size: 1.1rem;">Start Screening Now</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 ASD Detection System. All rights reserved. | Developed for Educational & Research Purposes</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

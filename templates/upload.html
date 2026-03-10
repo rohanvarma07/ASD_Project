@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Upload Autism Dataset">
+    <title>Upload Dataset - ASD Detection System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/dashboard" class="nav-brand">
+                ASD<span>Detect</span>
+            </a>
+            <ul class="nav-menu">
+                <li><a href="/dashboard" class="nav-link">Home</a></li>
+                <li><a href="/upload" class="nav-link active">Upload Dataset</a></li>
+                <li><a href="/results" class="nav-link">Prediction Results</a></li>
+                <li><a href="/logout" class="nav-link">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Upload Section -->
+    <div class="container">
+        <div class="about-content">
+            <h1 class="text-center mb-4">Upload Autism Dataset</h1>
+            <p class="text-center" style="color: var(--text-secondary); margin-bottom: 2rem;">
+                Upload your CSV file containing autism screening data for automatic detection
+            </p>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Upload Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Select CSV File</h2>
+                </div>
+                <div class="card-body">
+                    <form id="uploadForm" method="POST" action="/upload" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <div class="file-upload-wrapper">
+                                <input 
+                                    type="file" 
+                                    id="csvFile" 
+                                    name="file" 
+                                    class="file-upload-input" 
+                                    accept=".csv"
+                                    required
+                                >
+                                <label for="csvFile" class="file-upload-label">
+                                    <div class="file-upload-icon">📁</div>
+                                    <h3 style="margin-bottom: 0.5rem;">Click to Upload CSV File</h3>
+                                    <p style="color: var(--medium-gray);">or drag and drop your file here</p>
+                                    <p style="font-size: 0.9rem; color: var(--medium-gray); margin-top: 1rem;">
+                                        Supported format: CSV (Max size: 10MB)
+                                    </p>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block" style="margin-top: 1.5rem;">
+                            Upload and Process Dataset
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Dataset Requirements -->
+            <div class="info-section mt-4">
+                <h3>📋 Dataset Requirements</h3>
+                <p>Your CSV file must contain the following columns:</p>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Column Name</th>
+                                <th>Description</th>
+                                <th>Example Values</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>ID</td>
+                                <td>Unique identifier</td>
+                                <td>1, 2, 3, ...</td>
+                            </tr>
+                            <tr>
+                                <td>A1_Score</td>
+                                <td>Question 1 response</td>
+                                <td>0 or 1</td>
+                            </tr>
+                            <tr>
+                                <td>A2_Score</td>
+                                <td>Question 2 response</td>
+                                <td>0 or 1</td>
+                            </tr>
+                            <tr>
+                                <td>A3_Score</td>
+                                <td>Question 3 response</td>
+                                <td>0 or 1</td>
+                            </tr>
+                            <tr>
+                                <td>A4_Score</td>
+                                <td>Question 4 response</td>
+                                <td>0 or 1</td>
+                            </tr>
+                            <tr>
+                                <td>A5_Score</td>
+                                <td>Question 5 response</td>
+                                <td>0 or 1</td>
+                            </tr>
+                            <tr>
+                                <td>A6_Score</td>
+                                <td>Question 6 response</td>
+                                <td>0 or 1</td>
+                            </tr>
+                            <tr>
+                                <td>A7_Score</td>
+                                <td>Question 7 response</td>
+                                <td>0 or 1</td>
+                            </tr>
+                            <tr>
+                                <td>A8_Score</td>
+                                <td>Question 8 response</td>
+                                <td>0 or 1</td>
+                            </tr>
+                            <tr>
+                                <td>A9_Score</td>
+                                <td>Question 9 response</td>
+                                <td>0 or 1</td>
+                            </tr>
+                            <tr>
+                                <td>A10_Score</td>
+                                <td>Question 10 response</td>
+                                <td>0 or 1</td>
+                            </tr>
+                            <tr>
+                                <td>age</td>
+                                <td>Age of individual</td>
+                                <td>5, 12, 25, ...</td>
+                            </tr>
+                            <tr>
+                                <td>gender</td>
+                                <td>Gender</td>
+                                <td>m, f, male, female</td>
+                            </tr>
+                            <tr>
+                                <td>ethnicity</td>
+                                <td>Ethnic background</td>
+                                <td>White-European, Asian, etc.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sample Data Preview (if dataset exists) -->
+            {% if dataset_preview %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h2 class="card-title">Dataset Preview</h2>
+                </div>
+                <div class="card-body">
+                    <div class="table-wrapper">
+                        {{ dataset_preview | safe }}
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="/results" class="btn btn-success">
+                            View Prediction Results →
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Instructions -->
+            <div class="alert alert-info mt-4">
+                <strong>💡 Tip:</strong> Make sure your CSV file is properly formatted and contains all required columns 
+                before uploading. Missing columns or incorrect data types may result in processing errors.
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 ASD Detection System. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ASD Detection Dashboard">
+    <title>Dashboard - ASD Detection System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/dashboard" class="nav-brand">
+                ASD<span>Detect</span>
+            </a>
+            <ul class="nav-menu">
+                <li><a href="/dashboard" class="nav-link active">Home</a></li>
+                <li><a href="/upload" class="nav-link">Upload Dataset</a></li>
+                <li><a href="/results" class="nav-link">Prediction Results</a></li>
+                <li><a href="/logout" class="nav-link">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Dashboard Content -->
+    <div class="container">
+        <div class="text-center mb-4">
+            <h1>Welcome, {{ username }}!</h1>
+            <p class="hero-description">Your personal autism detection dashboard</p>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Dashboard Cards -->
+        <div class="dashboard-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📂</div>
+                <h3>Upload Dataset</h3>
+                <p>Upload your autism screening CSV file for analysis</p>
+                <a href="/upload" class="btn btn-primary" style="margin-top: 1rem;">Upload Now</a>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <h3>View Results</h3>
+                <p>Access your previous prediction results and analytics</p>
+                <a href="/results" class="btn btn-secondary" style="margin-top: 1rem;">View Results</a>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">📖</div>
+                <h3>Learn More</h3>
+                <p>Understand how the detection system works</p>
+                <a href="/about" class="btn btn-secondary" style="margin-top: 1rem;">About ASD</a>
+            </div>
+        </div>
+
+        <!-- Instructions Section -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h2 class="card-title">Getting Started</h2>
+            </div>
+            <div class="card-body">
+                <h3 style="color: var(--primary-color); margin-bottom: 1rem;">📋 How to Use This System</h3>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="margin-bottom: 0.5rem;">Step 1: Prepare Your Dataset</h4>
+                    <p>Ensure your CSV file contains the following columns:</p>
+                    <ul class="feature-list">
+                        <li>ID - Unique identifier for each record</li>
+                        <li>A1_Score through A10_Score - Screening question responses (0 or 1)</li>
+                        <li>age - Age of the individual</li>
+                        <li>gender - Gender (m/f or male/female)</li>
+                        <li>ethnicity - Ethnic background</li>
+                    </ul>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="margin-bottom: 0.5rem;">Step 2: Upload Your File</h4>
+                    <p>Click on "Upload Dataset" and select your CSV file. The system accepts only CSV format files.</p>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="margin-bottom: 0.5rem;">Step 3: Preview and Confirm</h4>
+                    <p>Review the data preview to ensure your file was uploaded correctly.</p>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="margin-bottom: 0.5rem;">Step 4: Automatic Processing</h4>
+                    <p>The system will automatically run the machine learning model and generate predictions.</p>
+                </div>
+
+                <div>
+                    <h4 style="margin-bottom: 0.5rem;">Step 5: View Results</h4>
+                    <p>Access comprehensive results including detection statistics and visualizations.</p>
+                </div>
+
+                <div class="text-center mt-4">
+                    <a href="/upload" class="btn btn-success" style="font-size: 1.1rem; padding: 1rem 2rem;">
+                        Start Upload Process →
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Important Notes -->
+        <div class="alert alert-info mt-4">
+            <strong>📌 Important Note:</strong> This system is designed as a screening tool and should not replace 
+            professional medical diagnosis. Always consult qualified healthcare providers for comprehensive evaluation.
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 ASD Detection System. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

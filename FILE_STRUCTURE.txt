@@ -1,0 +1,128 @@
+# PROJECT FILE STRUCTURE
+
+ASD_FEND/
+│
+├── 📄 app.py                          # Main Flask application (Backend)
+├── 📄 requirements.txt                # Python dependencies
+├── 📄 README.md                       # Complete project documentation
+├── 📄 DOCUMENTATION.txt               # Detailed technical documentation
+├── 📄 setup.sh                        # Setup script (macOS/Linux)
+├── 📄 setup.bat                       # Setup script (Windows)
+├── 📄 .gitignore                      # Git ignore rules
+├── 📊 sample_autism_dataset.csv       # Sample dataset for testing
+│
+├── 📁 templates/                      # HTML Templates (Frontend)
+│   ├── 🏠 home.html                   # Landing page
+│   ├── ℹ️ about.html                  # About ASD & system
+│   ├── 📝 register.html               # User registration
+│   ├── 🔐 login.html                  # User login
+│   ├── 📊 dashboard.html              # User dashboard
+│   ├── 📤 upload.html                 # Dataset upload
+│   └── 📈 results.html                # Prediction results
+│
+├── 📁 static/                         # Static Assets
+│   ├── 📁 css/
+│   │   └── 🎨 styles.css              # Complete custom styling (~700 lines)
+│   └── 📁 js/
+│       └── ⚡ script.js                # JavaScript interactions (~500 lines)
+│
+├── 📁 uploads/                        # Uploaded CSV files
+│   └── .gitkeep                       # Placeholder
+│
+└── 📁 models/                         # ML models directory
+    └── .gitkeep                       # Placeholder
+
+
+═══════════════════════════════════════════════════════════════════
+
+COMPONENT BREAKDOWN:
+
+📄 BACKEND (Python/Flask)
+   └── app.py
+       ├── User Authentication (Register, Login, Logout)
+       ├── File Upload Handling
+       ├── Dataset Processing
+       ├── ML Predictions
+       └── Session Management
+
+🎨 FRONTEND (HTML/CSS/JavaScript)
+   ├── 7 HTML Templates (Jinja2)
+   ├── Custom CSS (~700 lines)
+   │   ├── Medical-style color palette
+   │   ├── Responsive grid system
+   │   ├── Card components
+   │   ├── Form styling
+   │   └── Animations & transitions
+   └── Vanilla JavaScript (~500 lines)
+       ├── Form validation
+       ├── File upload handling
+       ├── Chart rendering
+       └── UI interactions
+
+📊 DATA PROCESSING
+   ├── Pandas (CSV reading & manipulation)
+   ├── NumPy (Numerical operations)
+   └── Custom prediction logic
+
+🔒 SECURITY
+   ├── Password hashing (Werkzeug)
+   ├── Session management (Flask)
+   ├── File validation
+   └── Input sanitization
+
+═══════════════════════════════════════════════════════════════════
+
+PAGE FLOW:
+
+   START
+     ↓
+   HOME (/)
+     ↓
+   ┌─────────┬─────────┐
+   ↓         ↓         ↓
+ ABOUT    REGISTER   LOGIN
+           ↓         ↓
+           └────┬────┘
+                ↓
+           DASHBOARD
+                ↓
+         ┌──────┴──────┐
+         ↓             ↓
+       UPLOAD      RESULTS
+         ↓             ↑
+         └─────────────┘
+
+═══════════════════════════════════════════════════════════════════
+
+TECHNOLOGY STACK:
+
+Frontend:
+  • HTML5 (Semantic markup)
+  • CSS3 (Custom design, no frameworks)
+  • JavaScript (Vanilla, ES6+)
+
+Backend:
+  • Python 3.8+
+  • Flask 2.3.3
+  • Pandas 2.0.3
+  • NumPy 1.24.3
+  • Werkzeug 2.3.7
+
+═══════════════════════════════════════════════════════════════════
+
+KEY FEATURES:
+
+✅ User Authentication & Authorization
+✅ Secure File Upload (CSV only)
+✅ Automatic ML-based Prediction
+✅ Data Preview & Validation
+✅ Interactive Results Dashboard
+✅ Visual Analytics (Charts)
+✅ Responsive Design
+✅ Form Validation (Client & Server)
+✅ Flash Message System
+✅ Session Management
+✅ Clean, Modern UI
+✅ Mobile-Friendly Navigation
+
+═══════════════════════════════════════════════════════════════════
