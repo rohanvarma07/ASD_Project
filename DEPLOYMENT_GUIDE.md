@@ -14,37 +14,67 @@ OPTION 1: RENDER (RECOMMENDED - FREE & EASIEST)
 
 ═══════════════════════════════════════════════════════════════════════
 
+🚨 **CRITICAL: YOU MUST USE POSTGRESQL ON RENDER!**
+
+⚠️ SQLite will NOT work on Render (ephemeral file system - data lost on restart)
+✅ PostgreSQL is FREE and required for production
+📖 See RENDER_DATABASE_WARNING.md for full explanation
+
+═══════════════════════════════════════════════════════════════════════
+
 ✅ Why Render?
 - ✓ FREE tier available
 - ✓ Automatic deployments from GitHub
 - ✓ Easy setup (5 minutes)
 - ✓ HTTPS included
-- ✓ PostgreSQL database available
+- ✓ PostgreSQL database available (FREE)
 - ✓ No credit card required for free tier
 
 ---
 
 📋 STEP-BY-STEP DEPLOYMENT TO RENDER:
 
-1. SIGN UP FOR RENDER
+⚠️ **IMPORTANT: Create PostgreSQL database FIRST before web service!**
+
+**STEP 0: CREATE POSTGRESQL DATABASE (REQUIRED)**
+   
+   1. Go to Render Dashboard: https://dashboard.render.com
+   2. Click "New +" → "PostgreSQL"
+   3. Configure database:
+      - Name: asd-database
+      - Database: asd_db
+      - User: asd_user
+      - Region: Oregon (US West) - remember this!
+      - PostgreSQL Version: 15
+      - Instance Type: **Free** ✅
+   4. Click "Create Database"
+   5. Wait 2-3 minutes for provisioning
+   6. Once ready, click on database name
+   7. Scroll to "Connections" section
+   8. **COPY the "Internal Database URL"** (starts with postgresql://)
+      - Example: `postgresql://asd_user:xxxxx@dpg-xxxxx-a/asd_db`
+      - ⚠️ Use INTERNAL not EXTERNAL URL!
+   9. Save this URL - you'll need it in Step 4
+
+**STEP 1: SIGN UP FOR RENDER**
    - Go to: https://render.com
    - Click "Get Started for Free"
    - Sign up with GitHub account (recommended)
 
-2. CONNECT YOUR GITHUB REPOSITORY
+**STEP 2: CONNECT YOUR GITHUB REPOSITORY**
    - Once logged in, click "New +"
    - Select "Web Service"
    - Click "Connect GitHub"
    - Authorize Render to access your repositories
    - Find and select "rohanvarma07/ASD_Project"
 
-3. CONFIGURE YOUR WEB SERVICE
+**STEP 3: CONFIGURE YOUR WEB SERVICE**
    
    Fill in these settings:
    
    Name: asd-detection-system (or your preferred name)
    
-   Region: Choose closest to you (e.g., Oregon, Singapore, Frankfurt)
+   Region: Oregon (SAME as your database!)
    
    Branch: main
    
@@ -58,29 +88,42 @@ OPTION 1: RENDER (RECOMMENDED - FREE & EASIEST)
    
    Instance Type: Free
    
-4. ADD ENVIRONMENT VARIABLES
+**STEP 4: ADD ENVIRONMENT VARIABLES (CRITICAL!)**
    
    Click "Advanced" and add these environment variables:
+   
+   **Key: DATABASE_URL** ⚠️ REQUIRED!
+   **Value: [paste Internal Database URL from Step 0]**
+   Example: postgresql://asd_user:xxxxx@dpg-xxxxx-a/asd_db
    
    Key: SECRET_KEY
    Value: (generate a random secret - see below)
    
-   Key: PYTHON_VERSION
-   Value: 3.11.0
-   
    Key: DEBUG
    Value: False
 
-5. DEPLOY!
+**STEP 5: DEPLOY!**
    - Click "Create Web Service"
    - Wait 3-5 minutes for deployment
+   - Watch build logs - should see:
+     * "✅ Database initialized successfully!"
+     * "✅ Connected to PostgreSQL database"
    - Your app will be live at: https://asd-detection-system.onrender.com
 
-6. TEST YOUR DEPLOYMENT
+**STEP 6: TEST YOUR DEPLOYMENT**
    - Visit your Render URL
-   - Login with: admin@example.com / admin123
+   - Register a new account
+   - Login with: your-email@example.com / your-password
    - Test file upload with sample dataset
    - Verify results display
+   
+**STEP 7: VERIFY DATA PERSISTENCE (IMPORTANT!)**
+   - Go to Render Dashboard → Your Web Service
+   - Click "Manual Deploy" → "Deploy latest commit"
+   - Wait for restart
+   - Try logging in again
+   - ✅ Your account should still exist!
+   - ✅ This confirms PostgreSQL is working
 
 ---
 
