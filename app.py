@@ -20,7 +20,8 @@ import json
 # ========================================
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-change-in-production'  # Change this in production!
+# Use environment variable for secret key in production
+app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
 
 # File upload configuration
 UPLOAD_FOLDER = 'uploads'
@@ -397,4 +398,8 @@ if __name__ == '__main__':
     print("=" * 50)
     
     # Run the application
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    # In production, use gunicorn instead
+    port = int(os.environ.get('PORT', 5001))
+    app.run(debug=os.environ.get('DEBUG', 'False') == 'True', 
+            host='0.0.0.0', 
+            port=port)

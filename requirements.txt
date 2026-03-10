@@ -10,3 +10,6 @@ Werkzeug==2.3.7
 
 # Additional utilities
 python-dateutil==2.8.2
+
+# Production Server
+gunicorn==21.2.0
