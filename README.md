@@ -1,53 +1,83 @@
 # Autism Spectrum Disorder Detection System
 
-A professional web-based system for autism detection using machine learning. This project provides an intuitive interface for uploading autism screening datasets and automatically generating predictions.
+A professional web-based system for autism detection using machine learning. This project provides an intuitive interface for uploading autism screening datasets and automatically generating predictions with persistent database storage.
 
-🌐 **Live Demo**: [Deploy on Render](https://render.com) | [See Deployment Guide](DEPLOYMENT_GUIDE.md)
+🌐 **Live Demo**: [Deploy on Render](https://render.com) | [See Deployment Guide](docs/DEPLOYMENT_GUIDE.md)
 
 ## 📋 Features
 
-- **User Authentication**: Secure registration and login system
-- **Dataset Upload**: Easy CSV file upload with validation
+- **User Authentication**: Secure registration and login system with encrypted passwords
+- **Database Backend**: PostgreSQL (production) / SQLite (development) for persistent data storage
+- **Dataset Upload**: Easy CSV file upload with validation and tracking
 - **Automatic Detection**: ML-based autism detection without manual algorithm selection
-- **Data Preview**: View uploaded dataset before processing
 - **Visual Analytics**: Interactive charts and detailed statistics
+- **Result History**: Access previous prediction results from database
 - **Responsive Design**: Clean, modern UI that works on all devices
-- **Result History**: Access previous prediction results
+- **Production Ready**: Configured for deployment on Render, Heroku, Railway, etc.
 
 ## 🛠️ Tech Stack
 
 ### Frontend
 - HTML5
-- CSS3 (Custom, original design)
-- Vanilla JavaScript
+- CSS3 (Custom, original design - 719 lines)
+- Vanilla JavaScript (492 lines)
 
 ### Backend
-- Python 3.8+
+- Python 3.11+
 - Flask 2.3.3
 - Pandas 2.0.3
 - NumPy 1.24.3
+- SQLite3 (development)
+- PostgreSQL (production via psycopg2-binary)
+
+### Deployment
+- Gunicorn 21.2.0 (production server)
+- Render / Heroku / Railway compatible
 
 ## 📁 Project Structure
 
 ```
 ASD_FEND/
+├── app.py                          # Main Flask application (430 lines)
+├── database.py                     # Database module (681 lines)
+├── requirements.txt                # Python dependencies
+├── Procfile                        # Production deployment config
+├── runtime.txt                     # Python version specification
+├── .gitignore                      # Git ignore rules
+├── README.md                       # This file
+├── asd_database.db                 # SQLite database (local dev)
+├── sample_autism_dataset.csv       # Sample data for testing
 │
-├── templates/
-│   ├── home.html           # Landing page
-│   ├── about.html          # About ASD and the system
-│   ├── register.html       # User registration
-│   ├── login.html          # User login
-│   ├── dashboard.html      # User dashboard
-│   ├── upload.html         # Dataset upload
-│   └── results.html        # Prediction results
+├── templates/                      # HTML templates (7 files)
+│   ├── home.html                  # Landing page
+│   ├── about.html                 # About ASD and the system
+│   ├── register.html              # User registration
+│   ├── login.html                 # User login
+│   ├── dashboard.html             # User dashboard
+│   ├── upload.html                # Dataset upload
+│   └── results.html               # Prediction results
 │
-├── static/
+├── static/                         # Static assets
 │   ├── css/
-│   │   └── styles.css      # Complete styling
+│   │   └── styles.css             # Complete styling (719 lines)
 │   └── js/
-│       └── script.js       # Client-side interactions
+│       └── script.js              # Client-side interactions (492 lines)
 │
-├── uploads/                # Uploaded CSV files (auto-created)
+├── docs/                           # Documentation
+│   ├── DATABASE_SETUP_GUIDE.md    # Complete database documentation
+│   ├── DATABASE_QUICK_START.md    # Quick reference
+│   ├── DEPLOYMENT_GUIDE.md        # Production deployment guide
+│   ├── RENDER_DATABASE_WARNING.md # Critical deployment info
+│   ├── QUICK_DEPLOY_RENDER.txt    # 5-minute deployment
+│   ├── DATABASE_IMPLEMENTATION_SUMMARY.md
+│   └── DATABASE_VERIFICATION_REPORT.md
+│
+├── models/                         # ML models directory (future use)
+│   └── .gitkeep
+│
+└── uploads/                        # User-uploaded CSV files
+    └── .gitkeep
+```
 ├── models/                 # ML models directory (auto-created)
 │
 ├── app.py                  # Flask backend application
@@ -229,12 +259,23 @@ with open('models/asd_model.pkl', 'wb') as f:
 
 3. Update the `predict_asd()` function in `app.py` to load and use the model.
 
+## 📚 Documentation
+
+Comprehensive guides are available in the `docs/` directory:
+
+- **[DATABASE_SETUP_GUIDE.md](docs/DATABASE_SETUP_GUIDE.md)** - Complete database setup and configuration
+- **[DATABASE_QUICK_START.md](docs/DATABASE_QUICK_START.md)** - Quick reference for database operations
+- **[DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)** - Full production deployment guide
+- **[QUICK_DEPLOY_RENDER.txt](docs/QUICK_DEPLOY_RENDER.txt)** - 5-minute deployment to Render
+- **[RENDER_DATABASE_WARNING.md](docs/RENDER_DATABASE_WARNING.md)** - ⚠️ Critical info about database deployment
+
 ## ⚠️ Important Notes
 
 - **Medical Disclaimer**: This system is for screening purposes only and should not replace professional medical diagnosis.
-- **Data Privacy**: In production, implement proper data encryption and privacy measures.
-- **Security**: Change the `secret_key` in `app.py` for production use.
-- **Database**: Current version uses in-memory storage. For production, use a real database (SQLite, PostgreSQL, etc.).
+- **Data Privacy**: User passwords are hashed, and data is stored securely in the database.
+- **Database**: Uses SQLite for local development and PostgreSQL for production deployment.
+- **Security**: Secret key uses environment variable in production. Always set `SECRET_KEY` environment variable when deploying.
+- **File Storage**: Uploaded files are stored locally. For production, consider cloud storage (S3, Cloudinary, etc.).
 
 ## 🔧 Configuration
 
@@ -243,9 +284,14 @@ with open('models/asd_model.pkl', 'wb') as f:
 - Allowed formats: CSV only
 - Upload directory: `uploads/`
 
+### Database Settings
+- Development: SQLite (`asd_database.db`)
+- Production: PostgreSQL (set `DATABASE_URL` environment variable)
+- Auto-detection based on environment
+
 ### Session Settings
-- Session timeout: Default Flask session timeout
-- Secret key: Change in `app.py` for production
+- Session security: Encrypted with SECRET_KEY
+- Secret key: From environment variable or default (change in production)
 
 ## 🐛 Troubleshooting
 
