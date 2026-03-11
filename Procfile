@@ -1,2 +1,3 @@
 # Procfile for deployment
-web: gunicorn app:app
+# Uses start.sh to initialize database before starting app
+web: bash start.sh

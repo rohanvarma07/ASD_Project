@@ -586,6 +586,35 @@ class PostgreSQLDatabase:
             )
         ''')
         
+        # Create screening_results table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS screening_results (
+                id SERIAL PRIMARY KEY,
+                user_email VARCHAR(255) NOT NULL,
+                age INTEGER,
+                gender VARCHAR(10),
+                ethnicity VARCHAR(50),
+                jaundice VARCHAR(3),
+                family_asd VARCHAR(3),
+                q1_score INTEGER,
+                q2_score INTEGER,
+                q3_score INTEGER,
+                q4_score INTEGER,
+                q5_score INTEGER,
+                q6_score INTEGER,
+                q7_score INTEGER,
+                q8_score INTEGER,
+                q9_score INTEGER,
+                q10_score INTEGER,
+                total_score INTEGER,
+                prediction VARCHAR(50),
+                confidence REAL,
+                risk_level VARCHAR(20),
+                screening_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_email) REFERENCES users (email)
+            )
+        ''')
+        
         # Create analysis_results table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS analysis_results (
