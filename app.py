@@ -722,6 +722,16 @@ def file_too_large(e):
 @app.errorhandler(500)
 def internal_error(e):
     """Handle 500 errors"""
+    # Log the actual error for debugging
+    import traceback
+    print("\n" + "="*60)
+    print("500 INTERNAL SERVER ERROR")
+    print("="*60)
+    print(f"Error: {str(e)}")
+    print("\nTraceback:")
+    traceback.print_exc()
+    print("="*60 + "\n")
+    
     flash('An internal error occurred. Please try again.', 'error')
     return redirect(url_for('home'))
 
