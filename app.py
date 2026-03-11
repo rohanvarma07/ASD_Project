@@ -60,10 +60,15 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 # Use PostgreSQL in production if DATABASE_URL is set, otherwise SQLite
 if os.environ.get('DATABASE_URL'):
     try:
-        db = PostgreSQLDatabase(os.environ.get('DATABASE_URL'))
+        database_url = os.environ.get('DATABASE_URL')
+        print(f"🔗 Attempting to connect to PostgreSQL...")
+        print(f"🔗 Database host: {database_url.split('@')[1].split('/')[0] if '@' in database_url else 'unknown'}")
+        db = PostgreSQLDatabase(database_url)
         print("✅ Connected to PostgreSQL database")
     except Exception as e:
-        print(f"⚠️ PostgreSQL connection failed: {e}")
+        import traceback
+        print(f"❌ PostgreSQL connection failed: {e}")
+        print(f"📋 Full error: {traceback.format_exc()}")
         print("📁 Falling back to SQLite...")
         db = Database('asd_database.db')
 else:
@@ -455,7 +460,12 @@ def login():
             return render_template('login.html')
         
         # Authenticate user with database
-        success, result = db.login_user(email, password)
+        try:
+            success, result = db.login_user(email, password)
+        except Exception as e:
+            print(f"❌ Login database error: {e}")
+            flash('Database connection error. Please try again or contact support.', 'error')
+            return render_template('login.html')
         
         if success:
             # Set session
@@ -504,12 +514,26 @@ def dashboard():
     # Get username from session, or fallback to email prefix
     username = user_data.get('username', email.split('@')[0])
     
-    # Get user statistics
-    stats = db.get_user_stats(email)
-    recent_files = db.get_user_files(email)
-    
-    # Get screening result if available
-    screening_data = db.get_screening_result(email)
+    try:
+        # Get user statistics
+        stats = db.get_user_stats(email)
+        recent_files = db.get_user_files(email)
+        
+        # Get screening result if available
+        screening_data = db.get_screening_result(email)
+    except Exception as e:
+        print(f"❌ Dashboard error for {email}: {e}")
+        # Initialize with default values if database error
+        stats = {
+            'total_files': 0,
+            'total_screenings': 0,
+            'last_screening': None,
+            'asd_positive': 0,
+            'asd_negative': 0
+        }
+        recent_files = []
+        screening_data = None
+        flash('Dashboard loaded with limited data. Database may still be initializing.', 'info')
     
     return render_template('dashboard.html', 
                          username=username, 
