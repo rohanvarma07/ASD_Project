@@ -44,6 +44,15 @@
         <!-- Dashboard Cards -->
         <div class="dashboard-grid">
             <div class="stat-card">
+                <div class="stat-icon">🧩</div>
+                <h3>ASD Screening</h3>
+                <p>Complete or view your screening questionnaire</p>
+                <a href="/screening" class="btn btn-primary" style="margin-top: 1rem;">
+                    {% if screening_data %}View Results{% else %}Start Screening{% endif %}
+                </a>
+            </div>
+            
+            <div class="stat-card">
                 <div class="stat-icon">📂</div>
                 <h3>Upload Dataset</h3>
                 <p>Upload your autism screening CSV file for analysis</p>
@@ -64,6 +73,35 @@
                 <a href="/about" class="btn btn-secondary" style="margin-top: 1rem;">About ASD</a>
             </div>
         </div>
+
+        <!-- Screening Result Display (if completed) -->
+        {% if screening_data %}
+        <div class="card mt-4" style="background: linear-gradient(135deg, 
+            {% if screening_data.risk_level == 'High' %}#f56565{% elif screening_data.risk_level == 'Medium' %}#ed8936{% else %}#48bb78{% endif %}, 
+            {% if screening_data.risk_level == 'High' %}#fc8181{% elif screening_data.risk_level == 'Medium' %}#f6ad55{% else %}#68d391{% endif %}); 
+            color: white; border: none;">
+            <div class="card-header" style="background: transparent; border: none;">
+                <h2 class="card-title" style="color: white;">🎯 Your Screening Results</h2>
+            </div>
+            <div class="card-body">
+                <div style="display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap;">
+                    <div style="text-align: center; margin: 1rem;">
+                        <div style="font-size: 3.5rem; font-weight: bold;">{{ screening_data.total_score }}/10</div>
+                        <div style="font-size: 1.2rem; opacity: 0.9;">Total Score</div>
+                    </div>
+                    <div style="text-align: center; margin: 1rem;">
+                        <div style="font-size: 2.5rem; font-weight: bold;">{{ screening_data.risk_level }}</div>
+                        <div style="font-size: 1.2rem; opacity: 0.9;">Risk Level</div>
+                    </div>
+                    <div style="text-align: center; margin: 1rem;">
+                        <a href="/screening" class="btn" style="background: white; color: var(--primary-color); font-weight: bold;">
+                            View Details →
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
 
         <!-- Instructions Section -->
         <div class="card mt-4">

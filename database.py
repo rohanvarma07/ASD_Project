@@ -19,10 +19,27 @@ class Database:
         self.init_database()
     
     def get_connection(self):
-        """Get database connection"""
-        conn = sqlite3.connect(self.db_path)
+        """Get database connection with timeout and WAL mode"""
+        conn = sqlite3.connect(self.db_path, timeout=30.0)  # 30 second timeout
         conn.row_factory = sqlite3.Row  # Access columns by name
+        # Enable WAL mode for better concurrency
+        conn.execute('PRAGMA journal_mode=WAL')
         return conn
+    
+    def __enter__(self):
+        """Context manager entry"""
+        self.conn = self.get_connection()
+        return self.conn
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit - ensures connection is closed"""
+        if hasattr(self, 'conn') and self.conn:
+            if exc_type is None:
+                self.conn.commit()
+            else:
+                self.conn.rollback()
+            self.conn.close()
+        return False
     
     def init_database(self):
         """Create database tables if they don't exist"""
@@ -77,6 +94,34 @@ class Database:
                 analyzed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_email) REFERENCES users (email),
                 FOREIGN KEY (file_id) REFERENCES uploaded_files (id)
+            )
+        ''')
+        
+        # Create screening_results table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS screening_results (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_email TEXT NOT NULL,
+                age INTEGER NOT NULL,
+                gender TEXT NOT NULL,
+                ethnicity TEXT NOT NULL,
+                jaundice TEXT NOT NULL,
+                family_history TEXT NOT NULL,
+                exam_result TEXT NOT NULL,
+                q1_routine TEXT NOT NULL,
+                q2_repeats TEXT NOT NULL,
+                q3_focus TEXT NOT NULL,
+                q4_empathy TEXT NOT NULL,
+                q5_changes TEXT NOT NULL,
+                q6_socializing TEXT NOT NULL,
+                q7_friends TEXT NOT NULL,
+                q8_movements TEXT NOT NULL,
+                q9_eye_contact TEXT NOT NULL,
+                q10_expressions TEXT NOT NULL,
+                total_score INTEGER,
+                risk_level TEXT,
+                completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_email) REFERENCES users (email)
             )
         ''')
         
@@ -197,20 +242,23 @@ class Database:
     
     def get_user_files(self, user_email):
         """Get all files uploaded by user"""
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            SELECT id, filename, file_size, upload_date
-            FROM uploaded_files
-            WHERE user_email = ?
-            ORDER BY upload_date DESC
-        ''', (user_email,))
-        
-        files = [dict(row) for row in cursor.fetchall()]
-        conn.close()
-        
-        return files
+        conn = None
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                SELECT id, filename, file_size, upload_date
+                FROM uploaded_files
+                WHERE user_email = ?
+                ORDER BY upload_date DESC
+            ''', (user_email,))
+            
+            files = [dict(row) for row in cursor.fetchall()]
+            return files
+        finally:
+            if conn:
+                conn.close()
     
     def get_file_path(self, file_id):
         """Get file path by ID"""
@@ -285,27 +333,31 @@ class Database:
     
     def get_latest_result(self, user_email):
         """Get most recent analysis result"""
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            SELECT ar.*, uf.filename
-            FROM analysis_results ar
-            LEFT JOIN uploaded_files uf ON ar.file_id = uf.id
-            WHERE ar.user_email = ?
-            ORDER BY ar.analyzed_at DESC
-            LIMIT 1
-        ''', (user_email,))
-        
-        result = cursor.fetchone()
-        conn.close()
-        
-        if result:
-            result_dict = dict(result)
-            if result_dict['results_data']:
-                result_dict['results_data'] = json.loads(result_dict['results_data'])
-            return result_dict
-        return None
+        conn = None
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                SELECT ar.*, uf.filename
+                FROM analysis_results ar
+                LEFT JOIN uploaded_files uf ON ar.file_id = uf.id
+                WHERE ar.user_email = ?
+                ORDER BY ar.analyzed_at DESC
+                LIMIT 1
+            ''', (user_email,))
+            
+            result = cursor.fetchone()
+            
+            if result:
+                result_dict = dict(result)
+                if result_dict['results_data']:
+                    result_dict['results_data'] = json.loads(result_dict['results_data'])
+                return result_dict
+            return None
+        finally:
+            if conn:
+                conn.close()
     
     # ========================================
     # UTILITY FUNCTIONS
@@ -313,28 +365,140 @@ class Database:
     
     def get_user_stats(self, user_email):
         """Get user statistics"""
-        conn = self.get_connection()
-        cursor = conn.cursor()
+        conn = None
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            
+            # Count uploaded files
+            cursor.execute('SELECT COUNT(*) as count FROM uploaded_files WHERE user_email = ?', (user_email,))
+            file_count = cursor.fetchone()['count']
+            
+            # Count analyses
+            cursor.execute('SELECT COUNT(*) as count FROM analysis_results WHERE user_email = ?', (user_email,))
+            analysis_count = cursor.fetchone()['count']
+            
+            # Get total cases analyzed
+            cursor.execute('SELECT SUM(total_cases) as total FROM analysis_results WHERE user_email = ?', (user_email,))
+            total_cases = cursor.fetchone()['total'] or 0
+            
+            return {
+                'files_uploaded': file_count,
+                'analyses_performed': analysis_count,
+                'total_cases_analyzed': total_cases
+            }
+        finally:
+            if conn:
+                conn.close()
+    
+    def save_screening_result(self, user_email, screening_data):
+        """Save screening result with retry logic"""
+        import time
         
-        # Count uploaded files
-        cursor.execute('SELECT COUNT(*) as count FROM uploaded_files WHERE user_email = ?', (user_email,))
-        file_count = cursor.fetchone()['count']
+        max_retries = 3
+        retry_delay = 0.1  # 100ms
         
-        # Count analyses
-        cursor.execute('SELECT COUNT(*) as count FROM analysis_results WHERE user_email = ?', (user_email,))
-        analysis_count = cursor.fetchone()['count']
+        for attempt in range(max_retries):
+            try:
+                conn = self.get_connection()
+                cursor = conn.cursor()
+                
+                # Calculate total score (count 'yes' answers)
+                total_score = sum([
+                    1 for q in ['q1_routine', 'q2_repeats', 'q3_focus', 'q4_empathy', 'q5_changes',
+                               'q6_socializing', 'q7_friends', 'q8_movements', 'q9_eye_contact', 'q10_expressions']
+                    if screening_data.get(q, '').lower() == 'yes'
+                ])
+                
+                # Determine risk level
+                if total_score >= 7:
+                    risk_level = 'High'
+                elif total_score >= 4:
+                    risk_level = 'Medium'
+                else:
+                    risk_level = 'Low'
+                
+                # Check if user already has a screening result
+                cursor.execute('SELECT id FROM screening_results WHERE user_email = ?', (user_email,))
+                existing = cursor.fetchone()
+                
+                if existing:
+                    # Update existing screening
+                    cursor.execute('''
+                        UPDATE screening_results SET
+                            age = ?, gender = ?, ethnicity = ?, jaundice = ?, family_history = ?,
+                            exam_result = ?, q1_routine = ?, q2_repeats = ?, q3_focus = ?,
+                            q4_empathy = ?, q5_changes = ?, q6_socializing = ?, q7_friends = ?,
+                            q8_movements = ?, q9_eye_contact = ?, q10_expressions = ?,
+                            total_score = ?, risk_level = ?, completed_at = CURRENT_TIMESTAMP
+                        WHERE user_email = ?
+                    ''', (
+                        screening_data['age'], screening_data['gender'], screening_data['ethnicity'],
+                        screening_data['jaundice'], screening_data['family_history'], screening_data['exam_result'],
+                        screening_data['q1_routine'], screening_data['q2_repeats'], screening_data['q3_focus'],
+                        screening_data['q4_empathy'], screening_data['q5_changes'], screening_data['q6_socializing'],
+                        screening_data['q7_friends'], screening_data['q8_movements'], screening_data['q9_eye_contact'],
+                        screening_data['q10_expressions'], total_score, risk_level, user_email
+                    ))
+                else:
+                    # Insert new screening
+                    cursor.execute('''
+                        INSERT INTO screening_results (
+                            user_email, age, gender, ethnicity, jaundice, family_history, exam_result,
+                            q1_routine, q2_repeats, q3_focus, q4_empathy, q5_changes, q6_socializing,
+                            q7_friends, q8_movements, q9_eye_contact, q10_expressions, total_score, risk_level
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ''', (
+                        user_email, screening_data['age'], screening_data['gender'], screening_data['ethnicity'],
+                        screening_data['jaundice'], screening_data['family_history'], screening_data['exam_result'],
+                        screening_data['q1_routine'], screening_data['q2_repeats'], screening_data['q3_focus'],
+                        screening_data['q4_empathy'], screening_data['q5_changes'], screening_data['q6_socializing'],
+                        screening_data['q7_friends'], screening_data['q8_movements'], screening_data['q9_eye_contact'],
+                        screening_data['q10_expressions'], total_score, risk_level
+                    ))
+                
+                conn.commit()
+                conn.close()
+                
+                return True, {'total_score': total_score, 'risk_level': risk_level}
+            
+            except sqlite3.OperationalError as e:
+                if 'locked' in str(e).lower() and attempt < max_retries - 1:
+                    # Database is locked, retry after a short delay
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff
+                    continue
+                else:
+                    # Max retries reached or different error
+                    return False, str(e)
+            except Exception as e:
+                try:
+                    conn.close()
+                except:
+                    pass
+                return False, str(e)
         
-        # Get total cases analyzed
-        cursor.execute('SELECT SUM(total_cases) as total FROM analysis_results WHERE user_email = ?', (user_email,))
-        total_cases = cursor.fetchone()['total'] or 0
-        
-        conn.close()
-        
-        return {
-            'files_uploaded': file_count,
-            'analyses_performed': analysis_count,
-            'total_cases_analyzed': total_cases
-        }
+        return False, "Database is busy. Please try again."
+    
+    def get_screening_result(self, user_email):
+        """Get user's screening result"""
+        conn = None
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                SELECT * FROM screening_results WHERE user_email = ?
+            ''', (user_email,))
+            
+            result = cursor.fetchone()
+            
+            if result:
+                return dict(result)
+            return None
+        finally:
+            if conn:
+                conn.close()
     
     def delete_old_files(self, days=30):
         """Delete files older than specified days"""

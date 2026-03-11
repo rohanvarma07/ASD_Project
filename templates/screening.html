@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ASD Screening Questionnaire">
+    <title>ASD Screening - ASD Detection System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .questionnaire-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .questionnaire-header {
+            background: linear-gradient(135deg, var(--primary-color), #667eea);
+            color: white;
+            padding: 3rem 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .questionnaire-header h1 {
+            margin: 0 0 1rem 0;
+            font-size: 2.5rem;
+        }
+
+        .questionnaire-header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-group-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+
+        .form-group-card:hover {
+            box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+            transform: translateY(-2px);
+        }
+
+        .form-group-card label {
+            display: block;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+        }
+
+        .form-group-card select,
+        .form-group-card input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .form-group-card select:focus,
+        .form-group-card input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .section-title {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 2.5rem 0 1.5rem 0;
+            padding-bottom: 0.75rem;
+            border-bottom: 3px solid var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-icon {
+            font-size: 1.8rem;
+        }
+
+        .submit-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, var(--primary-color), #667eea);
+            color: white;
+            padding: 1rem 3rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            height: 8px;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, var(--primary-color), #667eea);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .help-text {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 0.5rem;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .questionnaire-header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/dashboard" class="nav-brand">
+                ASD<span>Detect</span>
+            </a>
+            <ul class="nav-menu">
+                <li><a href="/dashboard" class="nav-link">Dashboard</a></li>
+                <li><a href="/screening" class="nav-link active">Screening</a></li>
+                <li><a href="/upload" class="nav-link">Upload Dataset</a></li>
+                <li><a href="/logout" class="nav-link">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="questionnaire-container">
+        <!-- Header -->
+        <div class="questionnaire-header">
+            <h1>🧩 ASD Screening Questionnaire</h1>
+            <p>Complete this comprehensive screening to assess autism spectrum disorder indicators</p>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar"></div>
+        </div>
+
+        <form id="screeningForm" method="POST" action="/screening">
+            <!-- Personal Information Section -->
+            <h2 class="section-title">
+                <span class="section-icon">👤</span>
+                Personal Information
+            </h2>
+            
+            <div class="form-grid">
+                <div class="form-group-card">
+                    <label for="age">Enter Age *</label>
+                    <input type="number" id="age" name="age" min="1" max="120" required 
+                           placeholder="Enter age" value="{{ screening_data.age if screening_data else '' }}">
+                    <p class="help-text">Age of the individual being assessed</p>
+                </div>
+
+                <div class="form-group-card">
+                    <label for="gender">Select Gender *</label>
+                    <select id="gender" name="gender" required>
+                        <option value="">Choose...</option>
+                        <option value="Male" {{ 'selected' if screening_data and screening_data.gender == 'Male' else '' }}>Male</option>
+                        <option value="Female" {{ 'selected' if screening_data and screening_data.gender == 'Female' else '' }}>Female</option>
+                        <option value="Other" {{ 'selected' if screening_data and screening_data.gender == 'Other' else '' }}>Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group-card">
+                    <label for="ethnicity">Select Ethnicity *</label>
+                    <select id="ethnicity" name="ethnicity" required>
+                        <option value="">Choose...</option>
+                        <option value="White" {{ 'selected' if screening_data and screening_data.ethnicity == 'White' else '' }}>White</option>
+                        <option value="Black" {{ 'selected' if screening_data and screening_data.ethnicity == 'Black' else '' }}>Black</option>
+                        <option value="Asian" {{ 'selected' if screening_data and screening_data.ethnicity == 'Asian' else '' }}>Asian</option>
+                        <option value="Hispanic" {{ 'selected' if screening_data and screening_data.ethnicity == 'Hispanic' else '' }}>Hispanic</option>
+                        <option value="Middle Eastern" {{ 'selected' if screening_data and screening_data.ethnicity == 'Middle Eastern' else '' }}>Middle Eastern</option>
+                        <option value="South Asian" {{ 'selected' if screening_data and screening_data.ethnicity == 'South Asian' else '' }}>South Asian</option>
+                        <option value="Mixed" {{ 'selected' if screening_data and screening_data.ethnicity == 'Mixed' else '' }}>Mixed</option>
+                        <option value="Other" {{ 'selected' if screening_data and screening_data.ethnicity == 'Other' else '' }}>Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group-card">
+                    <label for="jaundice">Jaundice at Birth *</label>
+                    <select id="jaundice" name="jaundice" required>
+                        <option value="">Choose...</option>
+                        <option value="Yes" {{ 'selected' if screening_data and screening_data.jaundice == 'Yes' else '' }}>Yes</option>
+                        <option value="No" {{ 'selected' if screening_data and screening_data.jaundice == 'No' else '' }}>No</option>
+                    </select>
+                    <p class="help-text">Yellowing of skin at birth</p>
+                </div>
+
+                <div class="form-group-card">
+                    <label for="family_history">Family History of Autism *</label>
+                    <select id="family_history" name="family_history" required>
+                        <option value="">Choose...</option>
+                        <option value="Yes" {{ 'selected' if screening_data and screening_data.family_history == 'Yes' else '' }}>Yes</option>
+                        <option value="No" {{ 'selected' if screening_data and screening_data.family_history == 'No' else '' }}>No</option>
+                    </select>
+                    <p class="help-text">Any family member diagnosed with ASD</p>
+                </div>
+
+                <div class="form-group-card">
+                    <label for="exam_result">Results of Previous Exam *</label>
+                    <select id="exam_result" name="exam_result" required>
+                        <option value="">Choose...</option>
+                        <option value="Not Tested" {{ 'selected' if screening_data and screening_data.exam_result == 'Not Tested' else '' }}>Not Tested</option>
+                        <option value="Positive" {{ 'selected' if screening_data and screening_data.exam_result == 'Positive' else '' }}>Positive</option>
+                        <option value="Negative" {{ 'selected' if screening_data and screening_data.exam_result == 'Negative' else '' }}>Negative</option>
+                    </select>
+                    <p class="help-text">If previously screened</p>
+                </div>
+            </div>
+
+            <!-- Behavioral Screening Questions -->
+            <h2 class="section-title">
+                <span class="section-icon">🧠</span>
+                Behavioral Screening (A1-A10)
+            </h2>
+            
+            <div class="form-grid">
+                <div class="form-group-card">
+                    <label for="q1_routine">Prefers Same Routine? *</label>
+                    <select id="q1_routine" name="q1_routine" required class="behavior-select">
+                        <option value="">Choose...</option>
+                        <option value="Yes" {{ 'selected' if screening_data and screening_data.q1_routine == 'Yes' else '' }}>Yes</option>
+                        <option value="No" {{ 'selected' if screening_data and screening_data.q1_routine == 'No' else '' }}>No</option>
+                    </select>
+                </div>
+
+                <div class="form-group-card">
+                    <label for="q2_repeats">Repeats Words/Phrases? *</label>
+                    <select id="q2_repeats" name="q2_repeats" required class="behavior-select">
+                        <option value="">Choose...</option>
+                        <option value="Yes" {{ 'selected' if screening_data and screening_data.q2_repeats == 'Yes' else '' }}>Yes</option>
+                        <option value="No" {{ 'selected' if screening_data and screening_data.q2_repeats == 'No' else '' }}>No</option>
+                    </select>
+                </div>
+
+                <div class="form-group-card">
+                    <label for="q3_focus">Extreme Focus on Topics? *</label>
+                    <select id="q3_focus" name="q3_focus" required class="behavior-select">
+                        <option value="">Choose...</option>
+                        <option value="Yes" {{ 'selected' if screening_data and screening_data.q3_focus == 'Yes' else '' }}>Yes</option>
+                        <option value="No" {{ 'selected' if screening_data and screening_data.q3_focus == 'No' else '' }}>No</option>
+                    </select>
+                </div>
+
+                <div class="form-group-card">
+                    <label for="q4_empathy">Struggles with Empathy? *</label>
+                    <select id="q4_empathy" name="q4_empathy" required class="behavior-select">
+                        <option value="">Choose...</option>
+                        <option value="Yes" {{ 'selected' if screening_data and screening_data.q4_empathy == 'Yes' else '' }}>Yes</option>
+                        <option value="No" {{ 'selected' if screening_data and screening_data.q4_empathy == 'No' else '' }}>No</option>
+                    </select>
+                </div>
+
+                <div class="form-group-card">
+                    <label for="q5_changes">Upset by Changes? *</label>
+                    <select id="q5_changes" name="q5_changes" required class="behavior-select">
+                        <option value="">Choose...</option>
+                        <option value="Yes" {{ 'selected' if screening_data and screening_data.q5_changes == 'Yes' else '' }}>Yes</option>
+                        <option value="No" {{ 'selected' if screening_data and screening_data.q5_changes == 'No' else '' }}>No</option>
+                    </select>
+                </div>
+
+                <div class="form-group-card">
+                    <label for="q6_socializing">Finds Socializing Hard? *</label>
+                    <select id="q6_socializing" name="q6_socializing" required class="behavior-select">
+                        <option value="">Choose...</option>
+                        <option value="Yes" {{ 'selected' if screening_data and screening_data.q6_socializing == 'Yes' else '' }}>Yes</option>
+                        <option value="No" {{ 'selected' if screening_data and screening_data.q6_socializing == 'No' else '' }}>No</option>
+                    </select>
+                </div>
+
+                <div class="form-group-card">
+                    <label for="q7_friends">Difficulty Making Friends? *</label>
+                    <select id="q7_friends" name="q7_friends" required class="behavior-select">
+                        <option value="">Choose...</option>
+                        <option value="Yes" {{ 'selected' if screening_data and screening_data.q7_friends == 'Yes' else '' }}>Yes</option>
+                        <option value="No" {{ 'selected' if screening_data and screening_data.q7_friends == 'No' else '' }}>No</option>
+                    </select>
+                </div>
+
+                <div class="form-group-card">
+                    <label for="q8_movements">Repetitive Movements? *</label>
+                    <select id="q8_movements" name="q8_movements" required class="behavior-select">
+                        <option value="">Choose...</option>
+                        <option value="Yes" {{ 'selected' if screening_data and screening_data.q8_movements == 'Yes' else '' }}>Yes</option>
+                        <option value="No" {{ 'selected' if screening_data and screening_data.q8_movements == 'No' else '' }}>No</option>
+                    </select>
+                </div>
+
+                <div class="form-group-card">
+                    <label for="q9_eye_contact">Avoids Eye Contact? *</label>
+                    <select id="q9_eye_contact" name="q9_eye_contact" required class="behavior-select">
+                        <option value="">Choose...</option>
+                        <option value="Yes" {{ 'selected' if screening_data and screening_data.q9_eye_contact == 'Yes' else '' }}>Yes</option>
+                        <option value="No" {{ 'selected' if screening_data and screening_data.q9_eye_contact == 'No' else '' }}>No</option>
+                    </select>
+                </div>
+
+                <div class="form-group-card">
+                    <label for="q10_expressions">Struggles with Expressions? *</label>
+                    <select id="q10_expressions" name="q10_expressions" required class="behavior-select">
+                        <option value="">Choose...</option>
+                        <option value="Yes" {{ 'selected' if screening_data and screening_data.q10_expressions == 'Yes' else '' }}>Yes</option>
+                        <option value="No" {{ 'selected' if screening_data and screening_data.q10_expressions == 'No' else '' }}>No</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Results Display (if screening completed) -->
+            {% if show_result and result %}
+            <div class="result-card" style="background: linear-gradient(135deg, 
+                {% if result.risk_level == 'High' %}#f56565{% elif result.risk_level == 'Medium' %}#ed8936{% else %}#48bb78{% endif %}, 
+                {% if result.risk_level == 'High' %}#fc8181{% elif result.risk_level == 'Medium' %}#f6ad55{% else %}#68d391{% endif %});
+                color: white; padding: 2rem; border-radius: 15px; margin: 2rem 0; text-align: center;">
+                <h3 style="margin: 0 0 1rem 0; font-size: 2rem;">Screening Result</h3>
+                <div style="font-size: 3rem; font-weight: bold; margin: 1rem 0;">{{ result.total_score }}/10</div>
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">Risk Level: {{ result.risk_level }}</div>
+                <p style="opacity: 0.9; margin: 1rem 0;">
+                    {% if result.risk_level == 'High' %}
+                        Higher indicators detected. Professional evaluation recommended.
+                    {% elif result.risk_level == 'Medium' %}
+                        Moderate indicators detected. Consider professional consultation.
+                    {% else %}
+                        Lower indicators detected. Monitor development regularly.
+                    {% endif %}
+                </p>
+            </div>
+            {% endif %}
+
+            <!-- Submit Section -->
+            <div class="submit-section">
+                <p style="color: #666; margin-bottom: 1.5rem;">
+                    {% if show_result %}
+                        You can update your screening by modifying the fields above and resubmitting
+                    {% else %}
+                        Please ensure all fields are completed accurately before submitting
+                    {% endif %}
+                </p>
+                <button type="submit" class="submit-btn">
+                    {% if show_result %}Update Screening{% else %}Submit Screening{% endif %} 🚀
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer" style="margin-top: 3rem;">
+        <div class="container">
+            <p>&copy; 2026 ASD Detection System. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Progress bar calculation
+        function updateProgress() {
+            const form = document.getElementById('screeningForm');
+            const inputs = form.querySelectorAll('input[required], select[required]');
+            let filled = 0;
+            
+            inputs.forEach(input => {
+                if (input.value && input.value !== '') {
+                    filled++;
+                }
+            });
+            
+            const progress = (filled / inputs.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        // Add listeners to all form inputs
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                input.addEventListener('change', updateProgress);
+                input.addEventListener('input', updateProgress);
+            });
+            
+            // Initial progress calculation
+            updateProgress();
+            
+            // Form validation
+            const form = document.getElementById('screeningForm');
+            form.addEventListener('submit', function(e) {
+                const age = document.getElementById('age').value;
+                if (age < 1 || age > 120) {
+                    e.preventDefault();
+                    alert('Please enter a valid age between 1 and 120');
+                    return false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
