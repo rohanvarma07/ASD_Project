@@ -860,6 +860,97 @@ class PostgreSQLDatabase:
                 result_dict['results_data'] = json.loads(result_dict['results_data'])
             return result_dict
         return None
+
+    def get_screening_result(self, user_email):
+        """Get user's screening result (PostgreSQL)"""
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+
+            cursor.execute('''
+                SELECT * FROM screening_results WHERE user_email = %s
+                LIMIT 1
+            ''', (user_email,))
+
+            row = cursor.fetchone()
+            conn.close()
+            if row:
+                return dict(row)
+            return None
+        except Exception as e:
+            try:
+                conn.close()
+            except:
+                pass
+            raise
+
+    def save_screening_result(self, user_email, screening_data):
+        """Save screening result into PostgreSQL"""
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+
+            # Calculate total score (count 'yes' answers)
+            total_score = sum([
+                1 for q in ['q1_routine', 'q2_repeats', 'q3_focus', 'q4_empathy', 'q5_changes',
+                           'q6_socializing', 'q7_friends', 'q8_movements', 'q9_eye_contact', 'q10_expressions']
+                if screening_data.get(q, '').lower() == 'yes'
+            ])
+
+            # Determine risk level
+            if total_score >= 7:
+                risk_level = 'High'
+            elif total_score >= 4:
+                risk_level = 'Medium'
+            else:
+                risk_level = 'Low'
+
+            # Check existing
+            cursor.execute('SELECT id FROM screening_results WHERE user_email = %s', (user_email,))
+            existing = cursor.fetchone()
+
+            if existing:
+                cursor.execute('''
+                    UPDATE screening_results SET
+                        age = %s, gender = %s, ethnicity = %s, jaundice = %s, family_history = %s,
+                        exam_result = %s, q1_routine = %s, q2_repeats = %s, q3_focus = %s,
+                        q4_empathy = %s, q5_changes = %s, q6_socializing = %s, q7_friends = %s,
+                        q8_movements = %s, q9_eye_contact = %s, q10_expressions = %s,
+                        total_score = %s, risk_level = %s, completed_at = CURRENT_TIMESTAMP
+                    WHERE user_email = %s
+                ''', (
+                    screening_data.get('age'), screening_data.get('gender'), screening_data.get('ethnicity'),
+                    screening_data.get('jaundice'), screening_data.get('family_history'), screening_data.get('exam_result'),
+                    screening_data.get('q1_routine'), screening_data.get('q2_repeats'), screening_data.get('q3_focus'),
+                    screening_data.get('q4_empathy'), screening_data.get('q5_changes'), screening_data.get('q6_socializing'),
+                    screening_data.get('q7_friends'), screening_data.get('q8_movements'), screening_data.get('q9_eye_contact'),
+                    screening_data.get('q10_expressions'), total_score, risk_level, user_email
+                ))
+            else:
+                cursor.execute('''
+                    INSERT INTO screening_results (
+                        user_email, age, gender, ethnicity, jaundice, family_history, exam_result,
+                        q1_routine, q2_repeats, q3_focus, q4_empathy, q5_changes, q6_socializing,
+                        q7_friends, q8_movements, q9_eye_contact, q10_expressions, total_score, risk_level
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ''', (
+                    user_email, screening_data.get('age'), screening_data.get('gender'), screening_data.get('ethnicity'),
+                    screening_data.get('jaundice'), screening_data.get('family_history'), screening_data.get('exam_result'),
+                    screening_data.get('q1_routine'), screening_data.get('q2_repeats'), screening_data.get('q3_focus'),
+                    screening_data.get('q4_empathy'), screening_data.get('q5_changes'), screening_data.get('q6_socializing'),
+                    screening_data.get('q7_friends'), screening_data.get('q8_movements'), screening_data.get('q9_eye_contact'),
+                    screening_data.get('q10_expressions'), total_score, risk_level
+                ))
+
+            conn.commit()
+            conn.close()
+            return True, {'total_score': total_score, 'risk_level': risk_level}
+        except Exception as e:
+            try:
+                conn.close()
+            except:
+                pass
+            return False, str(e)
     
     # ========================================
     # UTILITY FUNCTIONS
