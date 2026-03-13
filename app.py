@@ -585,7 +585,10 @@ def screening():
             success, result = db.save_screening_result(user_email, screening_data)
             
             if success:
-                flash(f'Screening completed! Risk Level: {result["risk_level"]} (Score: {result["total_score"]}/10)', 'success')
+                # Derive a clear test result label for better UX
+                test_result = 'Positive' if result.get('total_score', 0) >= 4 else 'Negative'
+                result['test_result'] = test_result
+                flash(f'Screening completed! {test_result} — Risk Level: {result["risk_level"]} (Score: {result["total_score"]}/10)', 'success')
                 return render_template('screening.html', 
                                      screening_data=screening_data,
                                      result=result,

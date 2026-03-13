@@ -366,18 +366,29 @@
             </div>
 
             <!-- Results Display (if screening completed) -->
-            {% if show_result and result %}
-            <div class="result-card" style="background: linear-gradient(135deg, 
-                {% if result.risk_level == 'High' %}#f56565{% elif result.risk_level == 'Medium' %}#ed8936{% else %}#48bb78{% endif %}, 
-                {% if result.risk_level == 'High' %}#fc8181{% elif result.risk_level == 'Medium' %}#f6ad55{% else %}#68d391{% endif %});
+            {% if show_result and (result or screening_data) %}
+            {% set res = result if result else screening_data %}
+          <div class="result-card" style="background: linear-gradient(135deg, 
+              {% if res.risk_level == 'High' %}#f56565{% elif res.risk_level == 'Medium' %}#ed8936{% else %}#48bb78{% endif %}, 
+             {% if res.risk_level == 'High' %}#fc8181{% elif res.risk_level == 'Medium' %}#f6ad55{% else %}#68d391{% endif %});
                 color: white; padding: 2rem; border-radius: 15px; margin: 2rem 0; text-align: center;">
                 <h3 style="margin: 0 0 1rem 0; font-size: 2rem;">Screening Result</h3>
-                <div style="font-size: 3rem; font-weight: bold; margin: 1rem 0;">{{ result.total_score }}/10</div>
-                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">Risk Level: {{ result.risk_level }}</div>
+                <div style="display:flex; justify-content:center; align-items:center; gap:1rem; margin-bottom:1rem;">
+                    <div style="font-size:3rem; font-weight:bold;">{{ res.total_score if res.total_score is not none else res['total_score'] if res['total_score'] is defined else '' }}/10</div>
+                    <div style="padding:0.4rem 0.8rem; border-radius:12px; font-weight:700; background:rgba(255,255,255,0.12);">
+                        {% if res.test_result %}
+                            {{ res.test_result }}
+                        {% else %}
+                            {% set score = res.total_score if res.total_score is not none else (res['total_score'] if 'total_score' in res else 0) %}
+                            {{ 'Positive' if score >= 4 else 'Negative' }}
+                        {% endif %}
+                    </div>
+                </div>
+                <div style="font-size: 1.2rem; margin-bottom: 0.5rem;">Risk Level: {{ res.risk_level }}</div>
                 <p style="opacity: 0.9; margin: 1rem 0;">
-                    {% if result.risk_level == 'High' %}
+                    {% if res.risk_level == 'High' %}
                         Higher indicators detected. Professional evaluation recommended.
-                    {% elif result.risk_level == 'Medium' %}
+                    {% elif res.risk_level == 'Medium' %}
                         Moderate indicators detected. Consider professional consultation.
                     {% else %}
                         Lower indicators detected. Monitor development regularly.
