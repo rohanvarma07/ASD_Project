@@ -580,6 +580,8 @@ def screening():
             }
             
             # Save screening result
+            # Log incoming screening data for debugging (do not log sensitive info in production)
+            print(f"🔔 Saving screening for {user_email}: { {k: screening_data.get(k) for k in screening_data} }")
             success, result = db.save_screening_result(user_email, screening_data)
             
             if success:
@@ -593,8 +595,12 @@ def screening():
                 return redirect(request.url)
         
         except Exception as e:
-            flash(f'Error processing screening: {str(e)}', 'error')
-            return redirect(request.url)
+            import traceback
+            tb = traceback.format_exc()
+            print(f"❌ Screening processing error for {user_email}: {e}\n{tb}")
+            # Return an explicit error page with guidance
+            flash('An internal error occurred while processing the screening. Our team has been notified.', 'error')
+            return render_template('error.html', message='Error saving screening data. Please try again later.'), 500
     
     # GET request - load existing screening if available
     existing_screening = db.get_screening_result(user_email)
