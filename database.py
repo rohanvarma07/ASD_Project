@@ -635,7 +635,35 @@ class PostgreSQLDatabase:
         conn.commit()
         conn.close()
         
-        print("✅ PostgreSQL database initialized successfully!")
+        # Ensure legacy deployments are migrated: add any missing columns
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            # Use IF NOT EXISTS to avoid errors on already-present columns
+            cursor.execute("ALTER TABLE screening_results ADD COLUMN IF NOT EXISTS family_history VARCHAR(3)")
+            cursor.execute("ALTER TABLE screening_results ADD COLUMN IF NOT EXISTS exam_result VARCHAR(50)")
+            cursor.execute("ALTER TABLE screening_results ADD COLUMN IF NOT EXISTS q1_routine VARCHAR(10)")
+            cursor.execute("ALTER TABLE screening_results ADD COLUMN IF NOT EXISTS q2_repeats VARCHAR(10)")
+            cursor.execute("ALTER TABLE screening_results ADD COLUMN IF NOT EXISTS q3_focus VARCHAR(10)")
+            cursor.execute("ALTER TABLE screening_results ADD COLUMN IF NOT EXISTS q4_empathy VARCHAR(10)")
+            cursor.execute("ALTER TABLE screening_results ADD COLUMN IF NOT EXISTS q5_changes VARCHAR(10)")
+            cursor.execute("ALTER TABLE screening_results ADD COLUMN IF NOT EXISTS q6_socializing VARCHAR(10)")
+            cursor.execute("ALTER TABLE screening_results ADD COLUMN IF NOT EXISTS q7_friends VARCHAR(10)")
+            cursor.execute("ALTER TABLE screening_results ADD COLUMN IF NOT EXISTS q8_movements VARCHAR(10)")
+            cursor.execute("ALTER TABLE screening_results ADD COLUMN IF NOT EXISTS q9_eye_contact VARCHAR(10)")
+            cursor.execute("ALTER TABLE screening_results ADD COLUMN IF NOT EXISTS q10_expressions VARCHAR(10)")
+            cursor.execute("ALTER TABLE screening_results ADD COLUMN IF NOT EXISTS total_score INTEGER")
+            cursor.execute("ALTER TABLE screening_results ADD COLUMN IF NOT EXISTS risk_level VARCHAR(20)")
+            cursor.execute("ALTER TABLE screening_results ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+            conn.commit()
+            conn.close()
+        except Exception:
+            try:
+                conn.close()
+            except:
+                pass
+
+        print("✅ PostgreSQL database initialized successfully (with migrations)!")
     
     # ========================================
     # USER MANAGEMENT (PostgreSQL uses %s instead of ?)
