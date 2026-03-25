@@ -170,15 +170,18 @@
             {% if dataset_preview %}
             <div class="card mt-4">
                 <div class="card-header">
-                    <h2 class="card-title">Dataset Preview</h2>
+                    <h2 class="card-title">📋 Latest Dataset Preview</h2>
                 </div>
                 <div class="card-body">
-                    <div class="table-wrapper">
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                        First 5 rows of your uploaded dataset ({{ dataset_preview.split('<tr>') | length - 1 }} rows displayed)
+                    </p>
+                    <div class="table-wrapper" style="overflow-x: auto;">
                         {{ dataset_preview | safe }}
                     </div>
                     <div class="text-center mt-3">
-                        <a href="/results" class="btn btn-success">
-                            View Prediction Results →
+                        <a href="/results" class="btn btn-success" style="background: linear-gradient(135deg, #48bb78, #38a169); color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                            ✓ View Full Results →
                         </a>
                     </div>
                 </div>

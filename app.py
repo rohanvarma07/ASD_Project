@@ -672,10 +672,23 @@ def upload():
             flash(results.get('error', 'Error processing dataset'), 'error')
             return redirect(request.url)
         
+        # Generate CSV preview (first 5 rows) for display
+        try:
+            preview_df = pd.read_csv(filepath, nrows=5)
+            # Convert DataFrame to HTML table
+            preview_html = preview_df.to_html(classes='data-table', index=False)
+            session['csv_preview'] = preview_html
+            session['csv_filename'] = filename
+        except Exception as e:
+            print(f"⚠️ Error generating preview: {e}")
+            session['csv_preview'] = None
+        
         flash('Dataset uploaded and processed successfully!', 'success')
         return redirect(url_for('results'))
     
-    return render_template('upload.html')
+    # On GET request, show upload form with any stored preview
+    preview_html = session.get('csv_preview')
+    return render_template('upload.html', dataset_preview=preview_html)
 
 
 @app.route('/results')
@@ -743,6 +756,46 @@ def results():
 def page_not_found(e):
     """Handle 404 errors"""
     return render_template('home.html'), 404
+
+
+@app.route('/preview_csv/<int:file_id>')
+def preview_csv(file_id):
+    """Preview a CSV file that was uploaded"""
+    if not session.get('logged_in'):
+        flash('Please login to view previews', 'warning')
+        return redirect(url_for('login'))
+    
+    email = session.get('email')
+    if not email:
+        flash('Session expired. Please login again.', 'warning')
+        session.clear()
+        return redirect(url_for('login'))
+    
+    try:
+        # Get file path from database
+        filepath = db.get_file_path(file_id)
+        if not filepath or not os.path.exists(filepath):
+            flash('File not found', 'error')
+            return redirect(url_for('upload'))
+        
+        # Read CSV and generate preview (first 10 rows)
+        preview_df = pd.read_csv(filepath, nrows=10)
+        preview_html = preview_df.to_html(classes='data-table', index=False)
+        
+        # Get file stats
+        file_size = os.path.getsize(filepath)
+        total_rows = len(pd.read_csv(filepath))
+        total_cols = len(preview_df.columns)
+        
+        return render_template('preview.html', 
+                             preview_html=preview_html,
+                             total_rows=total_rows,
+                             total_cols=total_cols,
+                             file_size=file_size)
+    except Exception as e:
+        print(f"❌ Error previewing CSV: {e}")
+        flash(f'Error previewing file: {str(e)}', 'error')
+        return redirect(url_for('upload'))
 
 
 @app.errorhandler(413)
